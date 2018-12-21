@@ -2,50 +2,39 @@ package com.github.max0961;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.Stack;
+import java.util.*;
 
 public class Graph {
 
     private final Vertex[] vertices;
-    private ArrayList<DirectedEdge>[] adjacency;
-    private int edgeCount;
 
     public Graph(int size) {
         vertices = new Vertex[size];
-        adjacency = new ArrayList[size];
-        for (int i = 0; i < size; ++i) {
-            vertices[i] = new Vertex(i);
-            adjacency[i] = new ArrayList<>();
-        }
-        this.edgeCount = 0;
+        for (int i = 0; i < size; ++i) vertices[i] = new Vertex(i);
     }
 
-    public int vertexCount() {
+    public int size() {
         return vertices.length;
     }
 
-    public int edgeCount() {
-        return edgeCount;
+    public Vertex vertex(int label) {
+        return vertices[label];
     }
 
-    public Vertex[] getVertices(){
+    public Vertex[] vertices() {
         return vertices;
     }
 
-    public ArrayList<DirectedEdge> getAdjacency(int v) {
-        return adjacency[v];
-    }
-
-    public void addEdge(DirectedEdge edge) {
-        adjacency[edge.from().getLabel()].add(edge);
-        edgeCount++;
+    public int edgeNumber() {
+        int total = 0;
+        for (Vertex v : vertices) {
+            total += v.adjacency().size();
+        }
+        return total;
     }
 
     public void addEdge(int u, int v, double weight) {
-        DirectedEdge edge = new DirectedEdge(vertices[u], vertices[v], weight);
-        adjacency[edge.from().getLabel()].add(edge);
+        vertices[u].addEdge(vertices[v], weight);
     }
 
     public void readFromFile(String fileName) {
@@ -75,26 +64,28 @@ public class Graph {
                 v = Math.abs(random.nextInt()) % vertices.length;
             }
             while (u == v);
-            adjacency[u].add(new DirectedEdge(vertices[u], vertices[v], random.nextDouble()));
+            addEdge(u, v, random.nextDouble());
         }
     }
 
-    public String printPath(Stack<DirectedEdge> path){
+    public String printPath(ArrayList<DirectedEdge> path) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Shortest path: ");
-        stringBuilder.append(path.peek().fromLabel());
-        for (DirectedEdge edge : path){
-            stringBuilder.append("->").append(edge.toLabel());
+        stringBuilder.append(path.get(path.size() - 1).from().label());
+        for (int i = path.size() - 1; i >= 0; --i) {
+            stringBuilder.append("->").append(path.get(i).to().label());
         }
         return stringBuilder.toString();
     }
 
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < adjacency.length; ++i) {
+        for (int i = 0; i < vertices.length; ++i) {
+            stringBuilder.append("Vertex ").append("\"").append(i).append("\":");
+            for (Map.Entry<Vertex, Double> entry : vertices[i].adjacency().entrySet()) {
+                stringBuilder.append(" to ").append("\"").append(entry.getKey().label()).append("\"")
+                        .append(" w = ").append(String.format("%.2f", entry.getValue())).append("; ");
+            }
             stringBuilder.append("\n");
-            for (DirectedEdge edge : adjacency[i])
-                stringBuilder.append(edge).append(" ");
         }
         return stringBuilder.toString();
     }

@@ -4,72 +4,75 @@ import java.util.*;
 
 public class SimpleDijkstra {
 
-    private Vertex[] distanceTo;
-    private DirectedEdge[] edgeTo;
+    private Graph graph;
     private PriorityQueue<Vertex> pq;
 
     public SimpleDijkstra(Graph graph, int source) {
+        this.graph = graph;
+        validateVertex(source);
         shortestPaths(graph, source);
     }
 
-    public double distTo(int v) {
+    public double distanceTo(int v) {
         validateVertex(v);
-        return distanceTo[v].getDistance();
+        return graph.vertex(v).getDistance();
     }
 
     public boolean hasPathTo(int v) {
         validateVertex(v);
-        return distanceTo[v].getDistance() < Double.POSITIVE_INFINITY;
+        return graph.vertex(v).getDistance() < Double.POSITIVE_INFINITY;
     }
 
-    public Stack<DirectedEdge> pathTo(int v) {
-        validateVertex(v);
-        if (!hasPathTo(v)) return null;
-        Stack<DirectedEdge> path = new Stack<DirectedEdge>();
-        for (DirectedEdge e = edgeTo[v]; e != null; e = edgeTo[e.fromLabel()]) {
-            path.push(e);
+    public ArrayList<DirectedEdge> pathTo(int target) {
+        validateVertex(target);
+        if (!hasPathTo(target)) return null;
+        ArrayList<DirectedEdge> path = new ArrayList<>();
+        Vertex v = graph.vertex(target);
+        while (v.hasPredecessor()){
+            path.add(new DirectedEdge(v.getPredecessor(), v));
+            v = v.getPredecessor();
         }
         return path;
     }
 
-    public void shortestPaths(Graph graph, int s) {
-        int n = graph.vertexCount();
-        distanceTo = graph.getVertices();
-        distanceTo[s].setDistance(0);
-        edgeTo = new DirectedEdge[n];
-        boolean[] visited = new boolean[n];
-        for (int i = 0; i < n; ++i) {
-            int v = extractMin(distanceTo, visited);
-            visited[v] = true;
-            for (DirectedEdge e : graph.getAdjacency(v)) {
-                relax(e);
+    public void shortestPaths(Graph graph, int source) {
+        Vertex s = graph.vertex(source);
+        s.setDistance(0);
+        boolean[] visited = new boolean[graph.size()];
+        for (int i = 0; i < graph.size(); ++i) {
+            Vertex u = extractMin(visited);
+            visited[u.label()] = true;
+            for (Map.Entry<Vertex, Double> entry : graph.vertex(u.label()).adjacency().entrySet()) {
+                Vertex v = entry.getKey();
+                double w = entry.getValue();
+                relax(u, v, w);
             }
         }
     }
 
-    private void relax(DirectedEdge e) {
-        int v = e.fromLabel(), w = e.toLabel();
-        if (distanceTo[w].getDistance() > distanceTo[v].getDistance() + e.getWeight()) {
-            distanceTo[w].setDistance(distanceTo[v].getDistance() + e.getWeight());
-            edgeTo[w] = e;
+    private void relax(Vertex u, Vertex v, double weight) {
+        if (v.getDistance() > u.getDistance() + weight) {
+            v.setDistance(u.getDistance() + weight);
+            v.setPredecessor(u);
         }
     }
 
-    private int extractMin(Vertex[] vertices, boolean[] visited) {
+    private Vertex extractMin(boolean[] visited) {
         int minDistLabel = 0;
         double minDist = Double.MAX_VALUE;
-        for (int i = 0; i < vertices.length; ++i) {
-            if (!visited[i] && vertices[i].getDistance() < minDist) {
+        for (int i = 0; i < graph.size(); ++i) {
+            if (!visited[i] && graph.vertex(i).getDistance() < minDist) {
                 minDistLabel = i;
-                minDist = vertices[i].getDistance();
+                minDist = graph.vertex(i).getDistance();
             }
         }
-        return minDistLabel;
+        return graph.vertex(minDistLabel);
     }
 
     private void validateVertex(int v) {
-        int V = distanceTo.length;
-        if (v < 0 || v >= V)
-            throw new IllegalArgumentException("vertex " + v + " is not between 0 and " + (V - 1));
+        int size = graph.size();
+        if (v < 0 || v >= size) {
+            throw new IllegalArgumentException("vertex " + v + " is not between 0 and " + (size - 1));
+        }
     }
 }

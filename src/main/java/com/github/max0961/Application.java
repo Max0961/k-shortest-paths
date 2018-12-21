@@ -4,11 +4,14 @@ public class Application
 {
     public static void main( String[] args )
     {
-        Graph graph = new Graph(10);
-        graph.generateRandomGraph(40);
+        Graph graph = new Graph(1000);
+        graph.generateRandomGraph(4000);
         SimpleDijkstra dijkstra = new SimpleDijkstra(graph, 0);
 
         System.out.println(graph);
+        System.out.println(graph.edgeNumber());
+        System.out.println(dijkstra.hasPathTo(5));
         System.out.println(graph.printPath(dijkstra.pathTo(5)));
+        System.out.println(dijkstra.distanceTo(5));
     }
 }

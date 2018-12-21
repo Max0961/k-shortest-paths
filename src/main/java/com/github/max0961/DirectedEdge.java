@@ -1,11 +1,14 @@
 package com.github.max0961;
 
-public class DirectedEdge {
-    private double weight;
-    private Vertex u;
-    private Vertex v;
+import java.util.Map;
 
-    public double getWeight() {
+public class DirectedEdge {
+    private Map.Entry<Vertex, Double> entry;
+    private final Vertex u;
+    private final Vertex v;
+    private double weight;
+
+    public double weight() {
         return weight;
     }
 
@@ -17,22 +20,14 @@ public class DirectedEdge {
         return v;
     }
 
-    public int fromLabel() {
-        return u.getLabel();
-    }
-
-    public int toLabel() {
-        return v.getLabel();
-    }
-
-    public DirectedEdge(Vertex u, Vertex v, double weight){
-        this.u = u;
-        this.v = v;
-        this.weight = weight;
+    public DirectedEdge(Vertex from, Vertex to){
+        this.u = from;
+        this.v = to;
+        this.weight = u.adjacency().get(v);
     }
 
     @Override
     public String toString(){
-        return String.format("w(%d,%d)=%.2f", u.getLabel(), v.getLabel(), weight);
+        return String.format("w(%d,%d)=%.2f", u.label(), v.label(), weight);
     }
 }
