@@ -1,9 +1,6 @@
-package com.github.max0961;
-
-import java.util.Map;
+package com.github.max0961.model;
 
 public class DirectedEdge {
-    private Map.Entry<Vertex, Double> entry;
     private final Vertex u;
     private final Vertex v;
     private double weight;
