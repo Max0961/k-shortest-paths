@@ -11,7 +11,7 @@ public final class TimeMeasuring {
         start = System.nanoTime();
     }
 
-    public static void end() {
+    public static void stop() {
         end = System.nanoTime();
     }
 

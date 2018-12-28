@@ -2,23 +2,28 @@ package com.github.max0961.model;
 
 import java.util.HashMap;
 
-public class Vertex {
-    private final int label;
+/**
+ *  Вершина содержит метку, ссылки на своих соседей, расчитанное или нет расстояние от источника
+ *  и ссылку на предыдущую верщину в дереве ратчайших путей.
+ */
+public class Vertex implements Comparable {
+    private final String label;
     private final HashMap<Vertex, Double> adjacency = new HashMap<>();
     private Double distance;
     private Vertex predecessor;
 
-    public Vertex(int label) {
+    public Vertex(String label) {
         this.label = label;
-        this.distance = Double.MAX_VALUE;
+        distance = Double.MAX_VALUE;
+        predecessor = null;
     }
 
-    public int label() {
-        return this.label;
+    public String label() {
+        return label;
     }
 
     public HashMap<Vertex, Double> adjacency() {
-        return this.adjacency;
+        return adjacency;
     }
 
     public void addEdgeTo(Vertex vertex, double weight) {
@@ -26,26 +31,17 @@ public class Vertex {
     }
 
     public void removeEdgeTo(Vertex vertex) {
-        this.adjacency.remove(vertex);
-        if (vertex.predecessor == this) {
-            vertex.predecessor = null;
-            vertex.distance = Double.MAX_VALUE;
-        }
+        adjacency.remove(vertex);
+        if (vertex.predecessor == this) vertex.clearTreeData();
     }
 
-    public Double getWeight(Vertex vertex){
-        return this.adjacency.get(vertex);
-    }
-
-    public DirectedEdge getEdgeTo(Vertex vertex) {
-        if (this.adjacency.containsKey(vertex)) {
-            return new DirectedEdge(this, vertex);
-        }
-        return null;
+    public void clearTreeData() {
+        predecessor = null;
+        distance = Double.MAX_VALUE;
     }
 
     public Double getDistance() {
-        return this.distance;
+        return distance;
     }
 
     public void setDistance(double distance) {
@@ -53,20 +49,25 @@ public class Vertex {
     }
 
     public boolean hasPredecessor() {
-        return this.predecessor != null;
+        return predecessor != null;
     }
 
     public Vertex getPredecessor() {
-        return this.predecessor;
+        return predecessor;
     }
 
     public void setPredecessor(Vertex predecessor) {
-        this.predecessor = predecessor;
+        predecessor = predecessor;
     }
 
-    public void clear() {
-        this.adjacency().clear();
-        this.predecessor = null;
-        this.distance = Double.MAX_VALUE;
+    @Override
+    public String toString() {
+        return new String(label);
+    }
+
+    @Override
+    public int compareTo(Object object) {
+        Vertex vertex = (Vertex) object;
+        return distance.compareTo(vertex.distance);
     }
 }

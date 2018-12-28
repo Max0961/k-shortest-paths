@@ -1,108 +1,115 @@
 package com.github.max0961.model;
 
 import java.io.*;
+import java.text.NumberFormat;
 import java.util.*;
 
 /**
- * Sets the vertex array and builds or removes the edges.
+ * Содержит множество вершин и методы добавления и удаления ребра
  *
  * @see Vertex
- * @see DirectedEdge
  */
 
 public class Graph {
-    private Vertex[] vertices;
+    private final HashMap<String, Vertex> vertices;
 
-    public Graph(int size) {
-        vertices = new Vertex[size];
-        for (int i = 0; i < vertices.length; ++i){
-            vertices[i] = new Vertex(i);
+    /**
+     * Создает граф с указанным количесвом вершин, метки - целые числа от 0
+     * @param verticesNumber Количество вершин
+     */
+    public Graph(int verticesNumber) {
+        vertices = new HashMap(verticesNumber);
+        for (int i = 0; i < verticesNumber; ++i) {
+            Vertex vertex = new Vertex(Integer.toString(i));
+            vertices.put(vertex.label(), vertex);
         }
     }
 
-    public Graph(String fileName){
+    /**
+     * Создает граф с, читая его из файла
+     * @param fileName Имя файла
+     */
+    public Graph(String fileName) {
+        vertices = new HashMap();
         readFromFile(fileName);
     }
 
-    public int size() {
-        return vertices.length;
+    public int verticesNumber() {
+        return vertices.size();
+    }
+
+    /**
+     * Создает вершину в графе, если такой вершины в нем нет
+     * @param label Метка вершины
+     * @return true, если вершина создана, false в противном случае
+     */
+    public boolean addVertex(String label) {
+        if (vertices.containsKey(label)) {
+            return false;
+        }
+        vertices.put(label, new Vertex(label));
+        return true;
+    }
+
+    public void removeVertex(String label) {
+        vertices.remove(label);
+    }
+
+    public Vertex getVertex(String label) {
+        validateLabel(label);
+        return vertices.get(label);
+    }
+
+    public HashMap<String, Vertex> getVertices() {
+        return vertices;
     }
 
     public int edgeNumber() {
         int total = 0;
-        for (Vertex v : vertices) {
+        for (Vertex v : vertices.values()) {
             total += v.adjacency().size();
         }
         return total;
     }
 
-    public Vertex vertex(int label) {
-        validateLabel(label);
-        return vertices[label];
-    }
-
-    public boolean hasEdge(int either, int other) {
-        validateLabel(either);
-        validateLabel(other);
-        return vertices[either].adjacency().containsKey(vertices[other])
-                || vertices[other].adjacency().containsKey(vertices[either]);
-    }
-
-    public void addEdge(int from, int to, double weight) {
+    public boolean hasEdge(String from, String to) {
         validateLabel(from);
         validateLabel(to);
-        vertices[from].addEdgeTo(vertices[to], weight);
+        return vertices.get(from).adjacency().containsKey(vertices.get(to));
     }
 
-    public void removeEdge(int from, int to) {
+    public void addEdge(String from, String to, double weight) {
         validateLabel(from);
         validateLabel(to);
-        vertices[from].removeEdgeTo(vertices[to]);
+        vertices.get(from).addEdgeTo(vertices.get(to), weight);
     }
 
-    public void clear() {
-        for (Vertex vertex : vertices) {
-            vertex.clear();
-        }
+    public void removeEdge(String from, String to) {
+        validateLabel(from);
+        validateLabel(to);
+        vertices.get(from).removeEdgeTo(vertices.get(to));
     }
 
-    public String printPath(int source, int target) {
-        validateLabel(source);
-        validateLabel(target);
-        StringBuilder stringBuilder = new StringBuilder();
-        buildPathString(vertices[source], vertices[target], stringBuilder);
-        return stringBuilder.toString();
-    }
-
-    private void buildPathString(Vertex s, Vertex v, StringBuilder sb) {
-        if (v == s) sb.append(String.format("%d", s.label()));
-        else if (!v.hasPredecessor()) sb.append(String.format("no path from \"%d\" to \"%d\"", s.label(), v.label()));
-        else {
-            buildPathString(s, v.getPredecessor(), sb);
-            sb.append(String.format("->%d", v.label()));
-        }
-    }
-
-    public void validateLabel(int label) {
-        int size = this.size();
-        if (label < 0 || label >= size) {
-            throw new IllegalArgumentException(String.format("vertex \"%d\" is not number between 0 and %d", label, size - 1));
+    public void clearTreeData() {
+        for (Vertex vertex : vertices.values()) {
+            vertex.clearTreeData();
         }
     }
 
     public void readFromFile(String fileName) {
-        int size = 0;
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
-            String string = bufferedReader.readLine();
-            vertices = new Vertex[Integer.parseInt(string)];
+            String string;
+            NumberFormat format = NumberFormat.getInstance(Locale.FRANCE);
 
             while ((string = bufferedReader.readLine()) != null) {
-                String[] edgeDescription = string.split("\\s");
+                String[] edgeDescription = string.split("\t+");
                 if (edgeDescription.length == 3) {
-                    addEdge(Integer.parseInt(edgeDescription[0]),
-                            Integer.parseInt(edgeDescription[1]),
-                            Double.parseDouble(edgeDescription[2]));
+                    addVertex(edgeDescription[0]);
+                    addVertex(edgeDescription[1]);
+                    addEdge(edgeDescription[0],
+                            edgeDescription[1],
+                            format.parse(edgeDescription[2]).doubleValue());
                 }
             }
         } catch (Exception e) {
@@ -110,16 +117,19 @@ public class Graph {
         }
     }
 
+    /**
+     * Вершины без соседей (недостижимые из любой другой вершины) не будут сохранены,
+     * так как файл представляет список рёбер
+     */
     public void saveToFile(String filename) {
         BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(new FileWriter(filename));
-            writer.write(vertices.length + "\n");
-            for (Vertex vertex : vertices) {
-                String label = Integer.toString(vertex.label());
+            for (Vertex vertex : vertices.values()) {
                 HashMap<Vertex, Double> adjacency = vertex.adjacency();
                 for (Map.Entry<Vertex, Double> entry : adjacency.entrySet()) {
-                    writer.write(String.format("%\td%\td%f\n", vertex.label(), entry.getKey().label(), entry.getValue()));
+                    String s = String.format("%s\t%s\t%f\n", vertex, entry.getKey(), entry.getValue());
+                    writer.write(s);
                 }
             }
         } catch (Exception e) {
@@ -138,24 +148,52 @@ public class Graph {
         for (int i = 0; i < edgeNumber; ++i) {
             int from, to;
             do {
-                from = Math.abs(random.nextInt()) % vertices.length;
-                to = Math.abs(random.nextInt()) % vertices.length;
+                from = Math.abs(random.nextInt()) % vertices.size();
+                to = Math.abs(random.nextInt()) % vertices.size();
             }
-            while (from == to || hasEdge(from, to));
-            addEdge(from, to, random.nextDouble());
+            while (from == to || hasEdge(Integer.toString(from), Integer.toString(to)));
+            addEdge(Integer.toString(from), Integer.toString(to), random.nextDouble());
         }
     }
 
+    public void generateRandomUndirectedGraph(int edgeNumber) {
+        Random random = new Random();
+        for (int i = 0; i < edgeNumber; ++i) {
+            int either, other;
+            do {
+                either = Math.abs(random.nextInt()) % vertices.size();
+                other = Math.abs(random.nextInt()) % vertices.size();
+            }
+            while (either == other || hasEdge(Integer.toString(either), Integer.toString(other))
+                    || hasEdge(Integer.toString(either), Integer.toString(other)));
+            double w = random.nextDouble();
+            addEdge(Integer.toString(either), Integer.toString(other), w);
+            addEdge(Integer.toString(other), Integer.toString(either), w);
+        }
+    }
+
+    @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < vertices.length; ++i) {
-            stringBuilder.append(String.format("\"%d\": ", i));
-            for (Map.Entry<Vertex, Double> entry : vertices[i].adjacency().entrySet()) {
-                stringBuilder.append(String.format("to \"%d\" ", entry.getKey().label()))
+        stringBuilder.append("Граф с |V| = %d и |E| = %d.", this.verticesNumber(), this.edgeNumber());
+        for (int i = 0; i < vertices.size(); ++i) {
+            stringBuilder.append(String.format("%d: ", i));
+            for (Map.Entry<Vertex, Double> entry : vertices.get(i).adjacency().entrySet()) {
+                stringBuilder.append(String.format("to %d ", entry.getKey().label()))
                         .append(String.format("w=%.2f", entry.getValue())).append("; ");
             }
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();
+    }
+
+    private void validateLabel(String label) {
+        int size = this.verticesNumber();
+        if (size == 0) {
+            throw new IllegalArgumentException(String.format("Vertex %s can not be found in the graph because it is empty", label));
+        }
+        if (!vertices.containsKey(label)) {
+            throw new IllegalArgumentException(String.format("Vertex %s can not be found in the graph", label, size - 1));
+        }
     }
 }
