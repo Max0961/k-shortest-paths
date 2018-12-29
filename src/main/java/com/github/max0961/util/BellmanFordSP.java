@@ -5,6 +5,9 @@ import com.github.max0961.model.Vertex;
 
 import java.util.Map;
 
+/**
+ * Время работы O(|V| x |E|)
+ */
 public final class BellmanFordSP {
 
     private BellmanFordSP() {}

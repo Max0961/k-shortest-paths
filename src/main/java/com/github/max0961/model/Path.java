@@ -1,12 +1,14 @@
 package com.github.max0961.model;
 
-import com.github.max0961.util.DijkstraSP;
+import com.github.max0961.util.BellmanFordSP;
+import com.github.max0961.util.HeapDijkstraSP;
+import com.github.max0961.util.SimpleDijkstraSP;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
 
 /**
- *  Путь - связный список вершин
+ * Путь - связный список вершин
  */
 public class Path implements Comparable<Path>, Cloneable {
     private LinkedList<Vertex> vertices;
@@ -36,7 +38,7 @@ public class Path implements Comparable<Path>, Cloneable {
         this.target = target.label();
         if (source.getDistance() != 0) {
             this.graph.clearTreeData();
-            DijkstraSP.compute(graph, source);
+            HeapDijkstraSP.compute(graph, source);
         }
         this.vertices = new LinkedList<>();
         this.totalWeight = target.getDistance();

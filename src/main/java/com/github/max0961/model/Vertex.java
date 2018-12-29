@@ -3,7 +3,7 @@ package com.github.max0961.model;
 import java.util.HashMap;
 
 /**
- *  Вершина содержит метку, ссылки на своих соседей, расчитанное или нет расстояние от источника
+ *  Вершина содержит метку, ссылки на своих соседей, расчитанные или нет расстояние от источника
  *  и ссылку на предыдущую верщину в дереве ратчайших путей.
  */
 public class Vertex implements Comparable {
@@ -57,7 +57,7 @@ public class Vertex implements Comparable {
     }
 
     public void setPredecessor(Vertex predecessor) {
-        predecessor = predecessor;
+        this.predecessor = predecessor;
     }
 
     @Override

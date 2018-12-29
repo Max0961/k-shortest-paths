@@ -4,7 +4,7 @@ import com.github.max0961.model.Vertex;
 
 import java.util.*;
 
-public class BinaryHeap<T extends Comparable<T>> extends PriorityQueue<T> {
+public class BinaryHeap<T extends Comparable<T>> {
     private static final int DEFAULT_CAPACITY = 10;
     private T[] items;
     private int size;
@@ -30,7 +30,7 @@ public class BinaryHeap<T extends Comparable<T>> extends PriorityQueue<T> {
     }
 
     public boolean add(T value) {
-        if (size >= items.length - 1) {
+        if (size == items.length - 1) {
             items = resize();
         }
         items[size++] = value;
@@ -58,11 +58,11 @@ public class BinaryHeap<T extends Comparable<T>> extends PriorityQueue<T> {
         return result;
     }
 
-    public String toString() {
-        return Arrays.toString(items);
-    }
+//    public String toString() {
+//        return Arrays.toString(items);
+//    }
 
-    private void bubbleDown(int index) {
+    public void bubbleDown(int index) {
         int smallerChild = index;
 
         if (hasLeftChild(index)
@@ -86,17 +86,6 @@ public class BinaryHeap<T extends Comparable<T>> extends PriorityQueue<T> {
 
         while (parent(index).compareTo(items[index]) > 0
                 && items[parentIndex(index)].compareTo(items[index]) > 0) {
-            swap(index, parentIndex(index));
-            index = parentIndex(index);
-        }
-    }
-
-    private void bubbleUp(int index, T item) {
-        if (items[index].compareTo(item) < 0) {
-            throw new IllegalArgumentException("Новый ключ больше предыдущего");
-        }
-
-        while (index >= 0 && items[parentIndex(index)].compareTo(items[index]) > 0) {
             swap(index, parentIndex(index));
             index = parentIndex(index);
         }
@@ -134,5 +123,14 @@ public class BinaryHeap<T extends Comparable<T>> extends PriorityQueue<T> {
         T tmp = items[index1];
         items[index1] = items[index2];
         items[index2] = tmp;
+    }
+
+    public String toString(){
+        StringBuilder stringBuilder = new StringBuilder();
+        for (T item : items) {
+            Vertex v = (Vertex) item;
+            stringBuilder.append(v.getDistance()).append(' ');
+        }
+        return stringBuilder.toString();
     }
 }

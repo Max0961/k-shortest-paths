@@ -6,16 +6,17 @@ import com.github.max0961.model.Vertex;
 import java.util.*;
 
 /**
- * The running time of the algorithm is O(n^2 + m).
- * The main loop is executed n times, in each of them n operations are spent on finding the minimum.
- * The cycles of the neighbors are spent the number of the edges m.
+ * Время работы O(|V|^2 + |E|).
+ * Основной цикл выполняется n раз, и каждый раз ищется вершина с минимальным значением
+ * {@link com.github.max0961.model.Vertex#distance}.
+ * Проверяется каждая смежная верщина с текущей, количество проверок равно m.
  */
 
-public final class DijkstraSP {
+public final class SimpleDijkstraSP {
     private static BinaryHeap priorityQueue;
     private static Set<Vertex> visited = new HashSet<>();
 
-    private DijkstraSP() {
+    private SimpleDijkstraSP() {
     }
 
     public static void compute(Graph graph, String source) {
@@ -24,9 +25,8 @@ public final class DijkstraSP {
 
     public static void compute(Graph graph, Vertex source) {
         source.setDistance(0);
-        priorityQueue = new BinaryHeap(graph.getVertices().values());
-        while (!priorityQueue.isEmpty()) {
-            Vertex u = (Vertex)priorityQueue.remove();
+        for (int i = 0; i < graph.verticesNumber(); ++i) {
+            Vertex u = minDistVertex(graph, visited);
             visited.add(u);
             for (Map.Entry<Vertex, Double> entry : graph.getVertex(u.label()).adjacency().entrySet()) {
                 Vertex v = entry.getKey();
@@ -40,21 +40,18 @@ public final class DijkstraSP {
         if (v.getDistance() > u.getDistance() + weight) {
             v.setDistance(u.getDistance() + weight);
             v.setPredecessor(u);
-            priorityQueue.bubbleUp(v.label(), v);
         }
     }
 
     private static Vertex minDistVertex(Graph graph, Set<Vertex> visited) {
-        String minDistLabel = "";
+        Vertex minDistVertex = null;
         double minDist = Double.MAX_VALUE;
-        Iterator iterator = graph.getVertices().values().iterator();
-        while (iterator.hasNext()) {
-            Vertex v = (Vertex) iterator;
-            if (!visited.contains(v) && v.getDistance() < minDist) {
-                minDistLabel = v.label();
+        for (Vertex v : graph.getVertices().values()) {
+            if (!visited.contains(v) && v.getDistance() <= minDist) {
+                minDistVertex = v;
                 minDist = v.getDistance();
             }
         }
-        return graph.getVertex(minDistLabel);
+        return minDistVertex;
     }
 }
