@@ -1,63 +1,51 @@
 package com.github.max0961.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.HashMap;
 
 /**
- *  Вершина содержит метку, ссылки на своих соседей, расчитанные или нет расстояние от источника
- *  и ссылку на предыдущую верщину в дереве ратчайших путей.
+ * Вершина содержит метку, ссылки на своих соседей, расчитанные или нет расстояние от источника
+ * и ссылку на предыдущую верщину в дереве ратчайших путей.
  */
-public class Vertex implements Comparable {
+public class Vertex implements Comparable<Vertex> {
+    @Getter
     private final String label;
-    private final HashMap<Vertex, Double> adjacency = new HashMap<>();
+    @Getter
+    private final HashMap<Vertex, Double> adjacency;
+    @Getter
+    @Setter
     private Double distance;
+    @Getter
+    @Setter
     private Vertex predecessor;
 
     public Vertex(String label) {
         this.label = label;
+        adjacency = new HashMap<>();
         distance = Double.MAX_VALUE;
-        predecessor = null;
-    }
-
-    public String label() {
-        return label;
-    }
-
-    public HashMap<Vertex, Double> adjacency() {
-        return adjacency;
-    }
-
-    public void addEdgeTo(Vertex vertex, double weight) {
-        this.adjacency.put(vertex, weight);
-    }
-
-    public void removeEdgeTo(Vertex vertex) {
-        adjacency.remove(vertex);
-        if (vertex.predecessor == this) vertex.clearTreeData();
-    }
-
-    public void clearTreeData() {
-        predecessor = null;
-        distance = Double.MAX_VALUE;
-    }
-
-    public Double getDistance() {
-        return distance;
-    }
-
-    public void setDistance(double distance) {
-        this.distance = distance;
     }
 
     public boolean hasPredecessor() {
         return predecessor != null;
     }
 
-    public Vertex getPredecessor() {
-        return predecessor;
+    public void addEdgeTo(Vertex vertex, double weight) {
+        this.adjacency.put(vertex, weight);
     }
 
-    public void setPredecessor(Vertex predecessor) {
-        this.predecessor = predecessor;
+    public boolean removeEdgeTo(Vertex vertex) {
+        if (!adjacency.containsKey(vertex)) {
+            return false;
+        }
+        adjacency.remove(vertex);
+        return true;
+    }
+
+    public void clearSpTreeData() {
+        distance = Double.MAX_VALUE;
+        predecessor = null;
     }
 
     @Override
@@ -66,8 +54,12 @@ public class Vertex implements Comparable {
     }
 
     @Override
-    public int compareTo(Object object) {
-        Vertex vertex = (Vertex) object;
+    public int hashCode() {
+        return label.hashCode();
+    }
+
+    @Override
+    public int compareTo(Vertex vertex) {
         return distance.compareTo(vertex.distance);
     }
 }

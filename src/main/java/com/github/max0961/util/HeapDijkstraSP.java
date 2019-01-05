@@ -8,29 +8,31 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Время работы O(|V|log|V| + |E|log|V|).
+ * Время работы O((|V| + |E|)log|V|).
  * Используется бинарная куча.
+ * Вершины добавляются в очередь по мере необходимости.
+ *
  * @see BinaryHeap
  */
-public class HeapDijkstraSP {
-    private static BinaryHeap priorityQueue;
-    private static Set<Vertex> visited = new HashSet<>();
+public final class HeapDijkstraSP {
+    private static BinaryHeap<Vertex> priorityQueue;
 
     private HeapDijkstraSP() {
     }
 
     public static void compute(Graph graph, String source) {
-        compute(graph, graph.getVertex(source));
+        compute(graph, graph.vertex(source));
     }
 
     public static void compute(Graph graph, Vertex source) {
-        source.setDistance(0);
-        priorityQueue = new BinaryHeap();
+        Set<Vertex> visited = new HashSet<>();;
+        init();
+        source.setDistance(0.0);
         priorityQueue.add(source);
         while (!priorityQueue.isEmpty()) {
-            Vertex u = (Vertex) priorityQueue.remove();
+            Vertex u = priorityQueue.remove();
             visited.add(u);
-            for (Map.Entry<Vertex, Double> entry : graph.getVertex(u.label()).adjacency().entrySet()) {
+            for (Map.Entry<Vertex, Double> entry : u.getAdjacency().entrySet()) {
                 Vertex v = entry.getKey();
                 double w = entry.getValue();
                 relax(u, v, w);
@@ -44,5 +46,9 @@ public class HeapDijkstraSP {
             v.setPredecessor(u);
             priorityQueue.add(v);
         }
+    }
+
+    private static void init() {
+        priorityQueue = new BinaryHeap<>();
     }
 }

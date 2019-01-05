@@ -58,9 +58,9 @@ public class BinaryHeap<T extends Comparable<T>> {
         return result;
     }
 
-//    public String toString() {
-//        return Arrays.toString(items);
-//    }
+    public boolean contains(){
+        return true;
+    }
 
     public void bubbleDown(int index) {
         int smallerChild = index;

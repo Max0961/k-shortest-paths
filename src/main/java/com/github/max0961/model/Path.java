@@ -3,98 +3,133 @@ package com.github.max0961.model;
 import com.github.max0961.util.BellmanFordSP;
 import com.github.max0961.util.HeapDijkstraSP;
 import com.github.max0961.util.SimpleDijkstraSP;
+import lombok.Getter;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
 
 /**
  * Путь - связный список вершин
+ *
+ * @see Vertex
  */
-public class Path implements Comparable<Path>, Cloneable {
-    private LinkedList<Vertex> vertices;
+public class Path implements Comparable<Path> {
     private Graph graph;
-    private String source;
-    private String target;
+    @Getter
+    private LinkedList<Vertex> vertices;
+    @Getter
     private double totalWeight;
 
+    /**
+     * Путь, созданный из источника вершин
+     *
+     * @param vertices список вершин
+     */
     public Path(LinkedList<Vertex> vertices) {
         this.vertices = new LinkedList<>(vertices);
-        totalWeight = 0;
-        Vertex v = vertices.peek();
-        while (v.hasPredecessor()) {
-            totalWeight += v.getPredecessor().adjacency().get(v);
+        if (vertices.size() == 0) {
+            return;
         }
-        target = vertices.peek().label();
-        source = v.label();
+        totalWeight = 0;
+        for (int i = 0; i < vertices.size() - 1; ++i) {
+            totalWeight += vertices.get(i).getAdjacency().get(vertices.get(i + 1));
+        }
     }
 
+    /**
+     * Путь, расчитанный от источника до цели
+     *
+     * @param graph  граф, где расчитывается путь
+     * @param source источник
+     * @param target цель
+     */
     public Path(Graph graph, String source, String target) {
-        this(graph, graph.getVertex(source), graph.getVertex(target));
+        this(graph, graph.vertex(source), graph.vertex(target));
     }
 
     public Path(Graph graph, Vertex source, Vertex target) {
         this.graph = graph;
-        this.source = source.label();
-        this.target = target.label();
-        if (source.getDistance() != 0) {
-            this.graph.clearTreeData();
-            HeapDijkstraSP.compute(graph, source);
+        this.graph.clearSpTreeData();
+        HeapDijkstraSP.compute(graph, source);
+        vertices = new LinkedList<>();
+        retrieve(target, vertices);
+        if (vertices.size() == 0) {
+            return;
         }
-        this.vertices = new LinkedList<>();
-        this.totalWeight = target.getDistance();
-        retrieve(source, target, vertices);
+        totalWeight = target.getDistance();
     }
 
-    public void add(Path path) {
-        vertices.addAll(path.vertices());
+    /**
+     * Добавляет в конец к этому пути другой путь и его стоимость
+     *
+     * @param path другой путь
+     */
+    public Path add(Path path) {
+        if (path.length() == 0) {
+            return this;
+        }
+        if (this.length() > 0 && this.vertexAt(length() - 1) == path.vertexAt(0)) {
+            vertices.pollLast();
+        }
+        vertices.addAll(path.getVertices());
         totalWeight += path.getTotalWeight();
+        return this;
     }
 
-    public LinkedList<Vertex> vertices() {
-        return vertices;
+    public Vertex vertexAt(int i) {
+        if (vertices.size() <= i) {
+            throw new IllegalArgumentException(String.format("no vertex with index %d since the path size is %d", i, vertices.size()));
+        }
+        if (i < 0) {
+            throw new IllegalArgumentException(String.format("negative index %d", i));
+        }
+        return vertices.get(i);
     }
 
-    public LinkedList<Vertex> vertices(int index) {
-        return (LinkedList) vertices.subList(0, index);
-    }
-
-    public Vertex vertex(int index) {
-        return vertices.get(index);
-    }
-
-    public double getTotalWeight() {
-        return totalWeight;
-    }
-
-    public void setTotalWeight(double totalWeight) {
-        totalWeight = totalWeight;
+    public LinkedList<Vertex> getVertices(int index) {
+        LinkedList<Vertex> subList = (LinkedList<Vertex>) vertices.clone();
+        if (index + 1 <= subList.size()) {
+            subList.subList(index + 1, subList.size()).clear();
+        }
+        return subList;
     }
 
     public int length() {
-        return this.vertices.size() - 1;
+        return this.vertices.size();
     }
 
-    public static void retrieve(Vertex source, Vertex vertex, LinkedList<Vertex> vertices) {
-        if (source == vertex) vertices.add(vertex);
-        if (!vertex.hasPredecessor()) return;
-        retrieve(source, vertex.getPredecessor(), vertices);
-        vertices.add(vertex);
+    public static boolean isEqualLists(LinkedList<Vertex> a, LinkedList<Vertex> b) {
+        if (a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); ++i) {
+            if (a.get(i) != b.get(i)) return false;
+        }
+        return true;
+    }
+
+    public static void retrieve(Vertex vertex, LinkedList<Vertex> vertices) {
+        while (vertex.hasPredecessor()) {
+            vertices.add(0, vertex);
+            vertex = vertex.getPredecessor();
+        }
+        if (vertices.size() > 0) {
+            vertices.add(0, vertex);
+        }
     }
 
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         if (vertices.size() == 0) {
-            stringBuilder.append(String.format("Не существует путь из %s в %s", source, target));
+            stringBuilder.append(String.format("Не существует путь между %s и %s\n",
+                    vertices.getLast().getLabel(), vertices.getFirst().getLabel()));
             return stringBuilder.toString();
         }
-        stringBuilder.append(String.format("Кратчайший путь из %s в %s: ", source, target));
         ListIterator<Vertex> iterator = vertices.listIterator();
-        stringBuilder.append(iterator.next().label());
+        stringBuilder.append(iterator.next());
         while (iterator.hasNext()) {
-            stringBuilder.append("->").append(iterator.next().label());
+            stringBuilder.append("->").append(iterator.next());
         }
-        stringBuilder.append(String.format(";\nВес пути: %f", totalWeight));
+        stringBuilder.append(String.format("(%f). ", totalWeight));
         return stringBuilder.toString();
     }
 

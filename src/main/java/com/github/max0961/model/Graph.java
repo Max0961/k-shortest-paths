@@ -1,5 +1,7 @@
 package com.github.max0961.model;
 
+import lombok.Getter;
+
 import java.io.*;
 import java.text.NumberFormat;
 import java.util.*;
@@ -11,36 +13,47 @@ import java.util.*;
  */
 
 public class Graph {
+    private static final int LIMIT = 100;
+    @Getter
     private final HashMap<String, Vertex> vertices;
 
     /**
-     * Создает граф с указанным количесвом вершин, метки - целые числа от 0
-     * @param verticesNumber Количество вершин
+     * Создает граф с указанным количесвом вершин, метки - натуральные числа
+     *
+     * @param verticesNumber количество вершин
      */
     public Graph(int verticesNumber) {
-        vertices = new HashMap(verticesNumber);
-        for (int i = 0; i < verticesNumber; ++i) {
+        vertices = new LinkedHashMap<>();
+        for (int i = 1; i <= verticesNumber; ++i) {
             Vertex vertex = new Vertex(Integer.toString(i));
-            vertices.put(vertex.label(), vertex);
+            vertices.put(vertex.getLabel(), vertex);
         }
     }
 
     /**
-     * Создает граф с, читая его из файла
-     * @param fileName Имя файла
+     * Создает граф, читая его из файла
+     *
+     * @param fileName имя файла
      */
     public Graph(String fileName) {
-        vertices = new HashMap();
+        vertices = new LinkedHashMap();
         readFromFile(fileName);
     }
+
 
     public int verticesNumber() {
         return vertices.size();
     }
 
+    public Vertex vertex(String label) {
+        validateLabel(label);
+        return vertices.get(label);
+    }
+
     /**
-     * Создает вершину в графе, если такую вершину он не сожержит нет
-     * @param label Метка вершины
+     * Создает новую вершину в графе, если вершина с такой меткой не имеется в графе
+     *
+     * @param label метка вершины
      * @return true, если вершина создана, false в противном случае
      */
     public boolean addVertex(String label) {
@@ -51,65 +64,91 @@ public class Graph {
         return true;
     }
 
+    /**
+     * Добавляет вершину в граф, если вершина с её меткой не имеется в графе
+     *
+     * @param vertex вершина
+     * @return true, если вершина добавлена, false в противном случае
+     */
+    public boolean addVertex(Vertex vertex) {
+        if (vertices.containsKey(vertex.getLabel())) {
+            return false;
+        }
+        vertices.put(vertex.getLabel(), vertex);
+        return true;
+    }
+
+    /**
+     * Удаляет вершину из графа
+     *
+     * @param label метка вершины
+     */
     public void removeVertex(String label) {
+        validateLabel(label);
         vertices.remove(label);
     }
 
-    public Vertex getVertex(String label) {
-        validateLabel(label);
-        return vertices.get(label);
-    }
 
-    public HashMap<String, Vertex> getVertices() {
-        return vertices;
-    }
-
-    public int edgeNumber() {
+    public int edgesNumber() {
         int total = 0;
         for (Vertex v : vertices.values()) {
-            total += v.adjacency().size();
+            total += v.getAdjacency().size();
         }
         return total;
     }
 
-    public boolean hasEdge(String from, String to) {
-        validateLabel(from);
-        validateLabel(to);
-        return vertices.get(from).adjacency().containsKey(vertices.get(to));
+    public boolean hasEdge(String source, String target) {
+        validateLabel(source);
+        validateLabel(target);
+        return hasEdge(this.vertex(source), this.vertex(target));
     }
 
-    public void addEdge(String from, String to, double weight) {
-        validateLabel(from);
-        validateLabel(to);
-        vertices.get(from).addEdgeTo(vertices.get(to), weight);
+    public static boolean hasEdge(Vertex source, Vertex target) {
+        return source.getAdjacency().containsKey(target);
     }
 
-    public void removeEdge(String from, String to) {
-        validateLabel(from);
-        validateLabel(to);
-        vertices.get(from).removeEdgeTo(vertices.get(to));
+    public void addEdge(String source, String target, double weight) {
+        validateLabel(source);
+        validateLabel(target);
+        addEdge(this.vertex(source), this.vertex(target), weight);
     }
 
-    public void clearTreeData() {
+    public static void addEdge(Vertex source, Vertex target, double weight) {
+        source.addEdgeTo(target, weight);
+    }
+
+    public boolean removeEdge(String source, String target) {
+        validateLabel(source);
+        validateLabel(target);
+        return removeEdge(this.vertex(source), this.vertex(target));
+    }
+
+    public static boolean removeEdge(Vertex source, Vertex target) {
+        return source.removeEdgeTo(target);
+    }
+
+
+    public void clearSpTreeData() {
         for (Vertex vertex : vertices.values()) {
-            vertex.clearTreeData();
+            vertex.clearSpTreeData();
         }
     }
 
+
     public void readFromFile(String fileName) {
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
-            String string;
             NumberFormat format = NumberFormat.getInstance(Locale.FRANCE);
-
-            while ((string = bufferedReader.readLine()) != null) {
-                String[] edgeDescription = string.split("\t+");
-                if (edgeDescription.length == 3) {
-                    addVertex(edgeDescription[0]);
-                    addVertex(edgeDescription[1]);
-                    addEdge(edgeDescription[0],
-                            edgeDescription[1],
-                            format.parse(edgeDescription[2]).doubleValue());
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
+            ArrayList<String[]> description = new ArrayList<>();
+            String current;
+            while ((current = bufferedReader.readLine()) != null) {
+                description.add(current.split("\t+"));
+                String label = description.get(description.size() - 1)[0];
+                addVertex(label);
+            }
+            for (String[] string : description) {
+                if (string.length == 3) {
+                    addEdge(string[0], string[1], format.parse(string[2]).doubleValue());
                 }
             }
         } catch (Exception e) {
@@ -117,17 +156,16 @@ public class Graph {
         }
     }
 
-    /**
-     * Вершины без соседей (недостижимые из любой другой вершины) не будут сохранены,
-     * так как файл представляет список рёбер
-     */
-    public void saveToFile(String filename) {
+    public void saveToFile(String fileName) {
         BufferedWriter writer = null;
         try {
-            writer = new BufferedWriter(new FileWriter(filename));
+            writer = new BufferedWriter(new FileWriter(fileName));
             for (Vertex vertex : vertices.values()) {
-                HashMap<Vertex, Double> adjacency = vertex.adjacency();
-                for (Map.Entry<Vertex, Double> entry : adjacency.entrySet()) {
+                if (vertex.getAdjacency().size() == 0) {
+                    writer.write(String.format("%s\n", vertex));
+                    continue;
+                }
+                for (Map.Entry<Vertex, Double> entry : vertex.getAdjacency().entrySet()) {
                     String s = String.format("%s\t%s\t%f\n", vertex, entry.getKey(), entry.getValue());
                     writer.write(s);
                 }
@@ -143,16 +181,17 @@ public class Graph {
         }
     }
 
+
     public void generateRandomDirectedGraph(int edgeNumber) {
         Random random = new Random();
         for (int i = 0; i < edgeNumber; ++i) {
-            int from, to;
+            int source, target;
             do {
-                from = Math.abs(random.nextInt()) % vertices.size();
-                to = Math.abs(random.nextInt()) % vertices.size();
+                source = Math.abs(random.nextInt()) % vertices.size() + 1;
+                target = Math.abs(random.nextInt()) % vertices.size() + 1;
             }
-            while (from == to || hasEdge(Integer.toString(from), Integer.toString(to)));
-            addEdge(Integer.toString(from), Integer.toString(to), random.nextDouble());
+            while (source == target || hasEdge(Integer.toString(source), Integer.toString(target)));
+            addEdge(Integer.toString(source), Integer.toString(target), random.nextDouble());
         }
     }
 
@@ -161,8 +200,8 @@ public class Graph {
         for (int i = 0; i < edgeNumber; ++i) {
             int either, other;
             do {
-                either = Math.abs(random.nextInt()) % vertices.size();
-                other = Math.abs(random.nextInt()) % vertices.size();
+                either = Math.abs(random.nextInt()) % vertices.size() + 1;
+                other = Math.abs(random.nextInt()) % vertices.size() + 1;
             }
             while (either == other || hasEdge(Integer.toString(either), Integer.toString(other))
                     || hasEdge(Integer.toString(either), Integer.toString(other)));
@@ -172,28 +211,33 @@ public class Graph {
         }
     }
 
+
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Граф с |V| = %d и |E| = %d.", this.verticesNumber(), this.edgeNumber());
-        for (int i = 0; i < vertices.size(); ++i) {
-            stringBuilder.append(String.format("%d: ", i));
-            for (Map.Entry<Vertex, Double> entry : vertices.get(i).adjacency().entrySet()) {
-                stringBuilder.append(String.format("to %d ", entry.getKey().label()))
-                        .append(String.format("w=%.2f", entry.getValue())).append("; ");
-            }
-            stringBuilder.append("\n");
+        stringBuilder.append(String.format("|V| = %d и |E| = %d\n", this.verticesNumber(), this.edgesNumber()));
+        if (vertices.size() > LIMIT) {
+            return stringBuilder.append(String.format("Лимит %d вершин\n", LIMIT)).toString();
         }
+        for (Vertex vertex : vertices.values()) {
+            stringBuilder.append(String.format("%s: ", vertex));
+            for (Map.Entry<Vertex, Double> entry : vertex.getAdjacency().entrySet()) {
+                stringBuilder.append(String.format("->%s", entry.getKey()))
+                        .append(String.format("(%.2f)", entry.getValue())).append("; ");
+            }
+            stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
+            stringBuilder.append(".\n");
+        }
+        stringBuilder.append("\n");
         return stringBuilder.toString();
     }
 
     private void validateLabel(String label) {
-        int size = this.verticesNumber();
-        if (size == 0) {
-            throw new IllegalArgumentException(String.format("Vertex %s can not be found in the graph because it is empty", label));
+        if (this.verticesNumber() == 0) {
+            throw new IllegalArgumentException(String.format("the graph does not have any getVertices so it has no vertex with label %s", label));
         }
         if (!vertices.containsKey(label)) {
-            throw new IllegalArgumentException(String.format("Vertex %s can not be found in the graph", label, size - 1));
+            throw new IllegalArgumentException(String.format("the graph has no vertex with label %s", label));
         }
     }
 }

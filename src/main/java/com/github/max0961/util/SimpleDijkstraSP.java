@@ -13,22 +13,20 @@ import java.util.*;
  */
 
 public final class SimpleDijkstraSP {
-    private static BinaryHeap priorityQueue;
-    private static Set<Vertex> visited = new HashSet<>();
-
     private SimpleDijkstraSP() {
     }
 
     public static void compute(Graph graph, String source) {
-        compute(graph, graph.getVertex(source));
+        compute(graph, graph.vertex(source));
     }
 
     public static void compute(Graph graph, Vertex source) {
-        source.setDistance(0);
+        Set<Vertex> visited = new HashSet<>();
+        source.setDistance(0.0);
         for (int i = 0; i < graph.verticesNumber(); ++i) {
             Vertex u = minDistVertex(graph, visited);
             visited.add(u);
-            for (Map.Entry<Vertex, Double> entry : graph.getVertex(u.label()).adjacency().entrySet()) {
+            for (Map.Entry<Vertex, Double> entry : u.getAdjacency().entrySet()) {
                 Vertex v = entry.getKey();
                 double w = entry.getValue();
                 relax(u, v, w);
