@@ -86,6 +86,7 @@ public class Path implements Comparable<Path> {
         return vertices.get(i);
     }
 
+    @SuppressWarnings("unchecked")
     public LinkedList<Vertex> getVertices(int index) {
         LinkedList<Vertex> subList = (LinkedList<Vertex>) vertices.clone();
         if (index + 1 <= subList.size()) {
@@ -120,8 +121,7 @@ public class Path implements Comparable<Path> {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         if (vertices.size() == 0) {
-            stringBuilder.append(String.format("Не существует путь между %s и %s\n",
-                    vertices.getLast().getLabel(), vertices.getFirst().getLabel()));
+            stringBuilder.append("Нет пути");
             return stringBuilder.toString();
         }
         ListIterator<Vertex> iterator = vertices.listIterator();

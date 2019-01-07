@@ -211,13 +211,12 @@ public class Graph {
         }
     }
 
-
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(String.format("|V| = %d и |E| = %d\n", this.verticesNumber(), this.edgesNumber()));
         if (vertices.size() > LIMIT) {
-            return stringBuilder.append(String.format("Лимит %d вершин\n", LIMIT)).toString();
+            return stringBuilder.append(String.format("Лимит на вывод %d вершин\n", LIMIT)).toString();
         }
         for (Vertex vertex : vertices.values()) {
             stringBuilder.append(String.format("%s: ", vertex));

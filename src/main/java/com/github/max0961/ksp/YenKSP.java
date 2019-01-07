@@ -11,11 +11,11 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 public class YenKSP {
-    private final ArrayList<Path> ksp;
+    private final LinkedList<Path> ksp;
     private final BinaryHeap<Path> candidates;
 
     public YenKSP(Graph graph, String source, String target, int k) {
-        ksp = new ArrayList<>();
+        ksp = new LinkedList<>();
         candidates = new BinaryHeap<>();
         kShortestPaths(k, graph, graph.vertex(source), graph.vertex(target));
     }
@@ -67,8 +67,9 @@ public class YenKSP {
             Path path;
             do {
                 path = candidates.remove();
-            } while (Path.isEqualLists(ksp.get(ksp.size() - 1).getVertices(), path.getVertices()));
+            } while (Path.isEqualLists(previous.getVertices(), path.getVertices()));
             ksp.add(path);
+            //ksp.add(candidates.remove());
         }
     }
 
@@ -87,7 +88,6 @@ public class YenKSP {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < ksp.size(); ++i) {
             stringBuilder.append(i + 1).append(")\t").append(ksp.get(i)).append("\n");
-            ;
         }
         return stringBuilder.toString();
     }
