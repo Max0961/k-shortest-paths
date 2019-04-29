@@ -1,18 +1,20 @@
 package com.github.max0961.util;
 
-import com.github.max0961.model.Vertex;
-
 import java.util.*;
 
 public class BinaryHeap<T extends Comparable<T>> {
-    private static final int DEFAULT_CAPACITY = 10;
-    private T[] items;
-    private int size;
+    protected static final int DEFAULT_CAPACITY = 10;
+    protected T[] items;
+    protected int size;
 
     @SuppressWarnings("unchecked")
     public BinaryHeap() {
         items = (T[]) new Comparable[DEFAULT_CAPACITY];
         this.size = 0;
+    }
+
+    public int size(){
+        return size;
     }
 
     @SuppressWarnings("unchecked")
@@ -29,24 +31,23 @@ public class BinaryHeap<T extends Comparable<T>> {
         }
     }
 
-    public boolean add(T value) {
-        if (size == items.length - 1) {
-            items = resize();
-        }
-        items[size++] = value;
-        bubbleUp();
-        return true;
-    }
-
     public boolean isEmpty() {
         return size == 0;
     }
 
     public T peek() {
         if (this.isEmpty()) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("The heap is empty.");
         }
         return items[0];
+    }
+
+    public void add(T value) {
+        if (size == items.length - 1) {
+            items = resize();
+        }
+        items[size++] = value;
+        bubbleUp();
     }
 
     public T remove() {
@@ -58,21 +59,17 @@ public class BinaryHeap<T extends Comparable<T>> {
         return result;
     }
 
-    public boolean contains(){
-        return true;
-    }
-
-    public void bubbleDown(int index) {
+    protected void bubbleDown(int index) {
         int smallerChild = index;
 
         if (hasLeftChild(index)
-                && items[leftChild(index)].compareTo(items[smallerChild]) < 0) {
-            smallerChild = leftChild(index);
+                && items[leftChildIndex(index)].compareTo(items[smallerChild]) < 0) {
+            smallerChild = leftChildIndex(index);
         }
 
         if (hasRightChild(index)
-                && items[rightChild(index)].compareTo(items[smallerChild]) < 0) {
-            smallerChild = rightChild(index);
+                && items[rightChildIndex(index)].compareTo(items[smallerChild]) < 0) {
+            smallerChild = rightChildIndex(index);
         }
 
         if (index != smallerChild) {
@@ -81,56 +78,46 @@ public class BinaryHeap<T extends Comparable<T>> {
         }
     }
 
-    private void bubbleUp() {
+    protected void bubbleUp() {
         int index = this.size - 1;
 
-        while (parent(index).compareTo(items[index]) > 0
-                && items[parentIndex(index)].compareTo(items[index]) > 0) {
+        while (index > 0 && parent(index).compareTo(items[index]) > 0) {
             swap(index, parentIndex(index));
             index = parentIndex(index);
         }
     }
 
-    private int leftChild(int i) {
+    protected int leftChildIndex(int i) {
         return i * 2 + 1;
     }
 
-    private int rightChild(int i) {
+    protected int rightChildIndex(int i) {
         return i * 2 + 2;
     }
 
-    private boolean hasLeftChild(int i) {
-        return leftChild(i) < size;
+    protected boolean hasLeftChild(int i) {
+        return leftChildIndex(i) < size;
     }
 
-    private boolean hasRightChild(int i) {
-        return rightChild(i) < size;
+    protected boolean hasRightChild(int i) {
+        return rightChildIndex(i) < size;
     }
 
-    private T parent(int i) {
+    protected T parent(int i) {
         return items[parentIndex(i)];
     }
 
-    private int parentIndex(int i) {
+    protected int parentIndex(int i) {
         return (i - 1) / 2;
     }
 
-    private T[] resize() {
+    protected T[] resize() {
         return Arrays.copyOf(items, items.length * 2);
     }
 
-    private void swap(int index1, int index2) {
+    protected void swap(int index1, int index2) {
         T tmp = items[index1];
         items[index1] = items[index2];
         items[index2] = tmp;
-    }
-
-    public String toString(){
-        StringBuilder stringBuilder = new StringBuilder();
-        for (T item : items) {
-            Vertex v = (Vertex) item;
-            stringBuilder.append(v.getDistance()).append(' ');
-        }
-        return stringBuilder.toString();
     }
 }

@@ -1,12 +1,11 @@
 package com.github.max0961.util;
 
 import com.github.max0961.model.Graph;
-import com.github.max0961.model.Vertex;
 
 import java.util.Map;
 
 /**
- * Время работы O(|V||E|) в наихудшем случае.
+ * Время работы O(nm) в наихудшем случае.
  */
 public final class BellmanFordSP {
     private static boolean hasChanges = true;
@@ -14,31 +13,33 @@ public final class BellmanFordSP {
     private BellmanFordSP() {
     }
 
-    public static void compute(Graph graph, String source) {
-        compute(graph, graph.vertex(source));
+    public static boolean compute(Graph graph, String root) {
+        return compute(graph, graph.getVertex(root));
     }
 
-    public static boolean compute(Graph graph, Vertex source) {
-        source.setDistance(0.0);
+    public static boolean compute(Graph graph, Graph.Vertex root) {
+        root.setDistance(0.0);
         for (int i = 0; i < graph.verticesNumber() - 1; ++i) {
             if (hasChanges == false) {
                 break;
             }
             hasChanges = false;
-            for (String label : graph.getVertices().keySet()) {
-                Vertex u = graph.vertex(label);
-                for (Map.Entry<Vertex, Double> entry : u.getAdjacency().entrySet()) {
-                    Vertex v = entry.getKey();
+            for (Graph.Vertex u : graph.getVertices()) {
+                for (Map.Entry<Graph.Vertex, Double> entry : u.getAdjacencyMap().entrySet()) {
+                    Graph.Vertex v = entry.getKey();
                     double w = entry.getValue();
                     relax(u, v, w);
                 }
             }
         }
+        return isWithNegativeCycles(graph);
+    }
+
+    private static boolean isWithNegativeCycles(Graph graph){
         hasChanges = true;
-        for (String label : graph.getVertices().keySet()) {
-            Vertex u = graph.vertex(label);
-            for (Map.Entry<Vertex, Double> entry : u.getAdjacency().entrySet()) {
-                Vertex v = entry.getKey();
+        for (Graph.Vertex u : graph.getVertices()) {
+            for (Map.Entry<Graph.Vertex, Double> entry : u.getAdjacencyMap().entrySet()) {
+                Graph.Vertex v = entry.getKey();
                 double w = entry.getValue();
                 if (v.getDistance() > u.getDistance() + w) {
                     return false;
@@ -48,7 +49,7 @@ public final class BellmanFordSP {
         return true;
     }
 
-    private static void relax(Vertex u, Vertex v, double weight) {
+    private static void relax(Graph.Vertex u, Graph.Vertex v, double weight) {
         if (v.getDistance() > u.getDistance() + weight) {
             v.setDistance(u.getDistance() + weight);
             v.setPredecessor(u);
