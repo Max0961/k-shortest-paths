@@ -1,11 +1,11 @@
-package com.github.max0961.util;
+package com.github.max0961.model.ksp.util;
 
 import com.github.max0961.model.Graph;
 
 import java.util.Map;
 
 /**
- * Время работы O(nm) в наихудшем случае.
+ * Временная сложность O(n*m) в наихудшем случае.
  */
 public final class BellmanFordSP {
     private static boolean hasChanges = true;
@@ -20,7 +20,7 @@ public final class BellmanFordSP {
     public static boolean compute(Graph graph, Graph.Vertex root) {
         root.setDistance(0.0);
         for (int i = 0; i < graph.verticesNumber() - 1; ++i) {
-            if (hasChanges == false) {
+            if (!hasChanges) {
                 break;
             }
             hasChanges = false;
@@ -32,10 +32,10 @@ public final class BellmanFordSP {
                 }
             }
         }
-        return isWithNegativeCycles(graph);
+        return hasReachableNegativeCycle(graph);
     }
 
-    private static boolean isWithNegativeCycles(Graph graph){
+    private static boolean hasReachableNegativeCycle(Graph graph){
         hasChanges = true;
         for (Graph.Vertex u : graph.getVertices()) {
             for (Map.Entry<Graph.Vertex, Double> entry : u.getAdjacencyMap().entrySet()) {

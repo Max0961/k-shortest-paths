@@ -1,4 +1,4 @@
-package com.github.max0961.util;
+package com.github.max0961.model.ksp.util;
 
 import java.util.*;
 
@@ -17,7 +17,6 @@ public class BinaryHeap<T extends Comparable<T>> {
         return size;
     }
 
-    @SuppressWarnings("unchecked")
     public BinaryHeap(Collection<T> collection) {
         this();
         for (T item : collection) {
@@ -42,6 +41,7 @@ public class BinaryHeap<T extends Comparable<T>> {
         return items[0];
     }
 
+    @SuppressWarnings("unchecked")
     public void add(T value) {
         if (size == items.length - 1) {
             items = resize();
@@ -59,7 +59,7 @@ public class BinaryHeap<T extends Comparable<T>> {
         return result;
     }
 
-    protected void bubbleDown(int index) {
+    private void bubbleDown(int index) {
         int smallerChild = index;
 
         if (hasLeftChild(index)
@@ -78,7 +78,7 @@ public class BinaryHeap<T extends Comparable<T>> {
         }
     }
 
-    protected void bubbleUp() {
+    private void bubbleUp() {
         int index = this.size - 1;
 
         while (index > 0 && parent(index).compareTo(items[index]) > 0) {
@@ -111,11 +111,11 @@ public class BinaryHeap<T extends Comparable<T>> {
         return (i - 1) / 2;
     }
 
-    protected T[] resize() {
+    private T[] resize() {
         return Arrays.copyOf(items, items.length * 2);
     }
 
-    protected void swap(int index1, int index2) {
+    private void swap(int index1, int index2) {
         T tmp = items[index1];
         items[index1] = items[index2];
         items[index2] = tmp;

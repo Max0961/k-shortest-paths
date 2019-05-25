@@ -1,23 +1,29 @@
-package com.github.max0961.ksp;
+package com.github.max0961.model.ksp;
 
 import com.github.max0961.model.DirectedEdge;
 import com.github.max0961.model.Graph;
 import com.github.max0961.model.Path;
-import com.github.max0961.util.BinaryHeap;
+import com.github.max0961.model.ksp.util.BinaryHeap;
 
 import java.util.LinkedList;
 
 /**
- * Вычисляет K кратчайших простых путей между двумя вершинами.
+ * Алгоритм Йена.
+ * Вычисляет K-кратчайших путей в графе с положительными весами ребер между двумя вершинами.
  * Время работы O(kn((n + m)log(n)).
  */
 public final class YenKSP extends KSP {
+    public YenKSP() {
+        super();
+    }
+
     public YenKSP(Graph graph, String source, String target, int k) {
         super(graph, source, target, k);
     }
 
     @Override
-    public void findKsp(int K, Graph graph, Graph.Vertex source, Graph.Vertex target) {
+    public void findKsp(int K, Graph graph, Graph.Vertex source, Graph.Vertex target) throws IllegalArgumentException {
+        ksp.clear();
         if (graph.getNegativeEdgeNumber() > 0) throw new IllegalArgumentException("The graph has negative edges");
         BinaryHeap<Path> candidates = new BinaryHeap<>();
         // Рассчитаем первый кратчайший путь

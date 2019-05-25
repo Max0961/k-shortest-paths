@@ -1,13 +1,12 @@
-package com.github.max0961.ksp.Eppstein;
+package com.github.max0961.model.ksp.Eppstein;
 
-import com.github.max0961.ksp.Eppstein.util.EdgeHeap;
-import com.github.max0961.ksp.Eppstein.util.ImplicitPath;
-import com.github.max0961.ksp.KSP;
+import com.github.max0961.model.ksp.Eppstein.util.EdgeHeap;
+import com.github.max0961.model.ksp.Eppstein.util.ImplicitPath;
+import com.github.max0961.model.ksp.KSP;
 import com.github.max0961.model.DirectedEdge;
 import com.github.max0961.model.Graph;
 import com.github.max0961.model.Path;
-import com.github.max0961.util.BinaryHeap;
-import com.github.max0961.util.HeapDijkstraSP;
+import com.github.max0961.model.ksp.util.BinaryHeap;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,15 +14,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
-/**
- * Вычисляет K кратчайших путей (допуская циклы) в графе между двумя вершинами.
- * Время работы O(m + n * log(n) + k * log(k))).
- */
 public final class EppsteinKSP extends KSP {
     private HashMap<String, DirectedEdge> sidetracks;
     private HashMap<Graph.Vertex, DirectedEdge> outRoots;
     private HashMap<Graph.Vertex, EdgeHeap> outRestHeaps;
     private HashMap<Graph.Vertex, EdgeHeap> treeHeaps;
+
+    public EppsteinKSP(){
+        super();
+    }
 
     public EppsteinKSP(Graph graph, String source, String target, int k) {
         super(graph, source, target, k);
@@ -145,7 +144,7 @@ public final class EppsteinKSP extends KSP {
 
     private void traverseHeap(PointerHeap heap, EdgeHeap treeHeap, int i) {
         heap.addChild(outRestHeaps.get(heap.sidetrack.getSource()));
-        Integer left, right;
+        int left, right;
         if (treeHeap.hasLeftChild(i)) {
             left = treeHeap.leftChildIndex(i);
             PointerHeap childHeap = new PointerHeap(treeHeap.getEdge(left), 3);
@@ -160,7 +159,7 @@ public final class EppsteinKSP extends KSP {
         }
     }
 
-    static class PointerHeap {
+    private static class PointerHeap {
         @Getter
         @Setter
         private DirectedEdge sidetrack;
@@ -168,12 +167,12 @@ public final class EppsteinKSP extends KSP {
         @Setter
         private ArrayList<Object> children;
 
-        public PointerHeap(DirectedEdge sidetrack, int degree) {
+        private PointerHeap(DirectedEdge sidetrack, int degree) {
             this.sidetrack = sidetrack;
             this.children = new ArrayList<>(degree);
         }
 
-        public void addChild(Object child) {
+        private void addChild(Object child) {
             this.children.add(child);
         }
     }

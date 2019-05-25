@@ -14,32 +14,35 @@ public class DirectedEdge implements Comparable<DirectedEdge>, Cloneable {
     @Setter
     private Double delta;
     @Getter
-    @Setter
     private Double incrementalWeight;
 
     /**
-     * Конструктор ребра, которое уже определено смежностью данных вершин в графе
+     * Конструктор ребра, в котором вес определяется уже имеющейся смежностью данных вершин в графе
      *
-     * @param source
-     * @param target
+     * @param source источник
+     * @param target цель
      */
     public DirectedEdge(Graph.Vertex source, Graph.Vertex target) {
         this.source = source;
         this.target = target;
         weight = source.getAdjacencyMap().get(target);
         if (weight == null) {
-            String exception = String.format("Vertices %s and %s are not adjacent in its graph", source, target);
+            String exception = String.format("Vertex %s are not adjacent to vertex %s in the graph", source, target);
             throw new IllegalArgumentException(exception);
         }
     }
 
+    /**
+     * @param source источник
+     * @param target цель
+     */
     public DirectedEdge(Graph.Vertex source, Graph.Vertex target, double weight) {
         this.source = source;
         this.target = target;
         this.weight = weight;
     }
 
-    public void inverse() {
+    protected void inverse() {
         Graph.Vertex t = source;
         source = target;
         target = t;
@@ -47,7 +50,7 @@ public class DirectedEdge implements Comparable<DirectedEdge>, Cloneable {
 
     @Override
     public String toString() {
-        return new String(source + "->" + target);
+        return source + "-" + target;
     }
 
     @Override
@@ -64,6 +67,11 @@ public class DirectedEdge implements Comparable<DirectedEdge>, Cloneable {
     }
 
     public DirectedEdge clone() {
+        try {
+            super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
         DirectedEdge e = new DirectedEdge(source, target, weight);
         e.delta = this.delta;
         e.incrementalWeight = this.incrementalWeight;

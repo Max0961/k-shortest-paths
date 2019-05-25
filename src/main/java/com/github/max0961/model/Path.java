@@ -1,14 +1,14 @@
 package com.github.max0961.model;
 
-import com.github.max0961.util.BellmanFordSP;
-import com.github.max0961.util.HeapDijkstraSP;
+import com.github.max0961.model.ksp.util.HeapDijkstraSP;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
 /**
- * Класс Path содержит связный список вершин и значение веса пути
+ * Класс Path представляет путь как связный список вершин
  *
  * @see Graph.Vertex
  */
@@ -16,13 +16,20 @@ public class Path implements Comparable<Path> {
     @Getter
     private LinkedList<Graph.Vertex> vertices;
     @Getter
-    public Graph.Vertex source;
+    private Graph.Vertex source;
     @Getter
-    public Graph.Vertex target;
+    private Graph.Vertex target;
     @Getter
-    public Double totalWeight;
+    private Double totalWeight;
     @Getter
     private boolean isReachableTarget;
+
+    /**
+     * Пустой путь
+     */
+    public Path() {
+
+    }
 
     /**
      * Путь, созданный из списка вершин
@@ -34,20 +41,24 @@ public class Path implements Comparable<Path> {
             this.vertices = new LinkedList<>(vertices);
             this.source = vertices.getFirst();
             this.target = vertices.getLast();
-            totalWeight = 0.0;
-            for (int i = 0; i < vertices.size() - 1; ++i) {
-                Double edgeWeight = vertices.get(i).getAdjacencyMap().get(vertices.get(i + 1));
-                if (edgeWeight == null) {
-                    isReachableTarget = false;
-                    totalWeight = null;
-                    break;
-                }
-                totalWeight += edgeWeight;
-            }
-            isReachableTarget = true;
+            computeTotalWeight();
         } else {
             isReachableTarget = false;
         }
+    }
+
+    private void computeTotalWeight() {
+        totalWeight = 0.0;
+        for (int i = 0; i < vertices.size() - 1; ++i) {
+            Double edgeWeight = vertices.get(i).getAdjacencyMap().get(vertices.get(i + 1));
+            if (edgeWeight == null) {
+                totalWeight = null;
+                isReachableTarget = false;
+                break;
+            }
+            totalWeight += edgeWeight;
+        }
+        isReachableTarget = true;
     }
 
     /**
@@ -71,23 +82,47 @@ public class Path implements Comparable<Path> {
         retrieve(target, vertices);
     }
 
+    public ArrayList<DirectedEdge> getEdges() {
+        ArrayList<DirectedEdge> edges = new ArrayList<>(vertices.size() - 1);
+        for (int i = 0; i < vertices.size() - 1; ++i) {
+            edges.add(new DirectedEdge(vertices.get(i), vertices.get(i + 1)));
+        }
+        return edges;
+    }
+
     /**
-     * Добавляет в конец к этому пути другой путь, обновляя значение стоимости.
-     * Другой путь должен начинаться с вершины, на которую заканчивается этот путь.
+     * Добавляет в конец к этому пути другой путь, обновляя значение веса.
      *
-     * @param path другой путь
+     * @param path добавляемый путь
      */
     public Path add(Path path) {
-        if (this.length() > 0 && this.vertices.getLast() == path.vertices.getFirst()) {
+        if (this.vertices.getLast() == path.vertices.getFirst()) {
             vertices.removeLast();
             vertices.addAll(path.getVertices());
             totalWeight += path.getTotalWeight();
             target = path.getTarget();
+        } else {
+            vertices.addAll(path.getVertices());
+            computeTotalWeight();
         }
         return this;
     }
 
-    public Graph.Vertex vertexAt(int i) {
+    /**
+     * Добавляет в конец к этому пути одну вершину, обновляя значение веса.
+     *
+     * @param edge добавляемая вершина
+     */
+    public Path add(DirectedEdge edge) {
+        if (this.vertices.getLast() == edge.getSource()) {
+            vertices.add(edge.getTarget());
+            totalWeight += edge.getWeight();
+            target = edge.getTarget();
+        }
+        return this;
+    }
+
+    public Graph.Vertex vertexAt(int i) throws IllegalArgumentException {
         if (vertices.size() <= i) {
             throw new IllegalArgumentException(String.format("No vertex with index %d since the path length is %d", i, vertices.size()));
         }
@@ -106,6 +141,11 @@ public class Path implements Comparable<Path> {
         return vertices;
     }
 
+    /**
+     * Возвращает количество вершин в пути
+     *
+     * @return колисество вершин
+     */
     public int length() {
         return this.vertices.size();
     }
@@ -132,15 +172,15 @@ public class Path implements Comparable<Path> {
             if (source != null && target != null) {
                 stringBuilder.append(String.format("Нет пути из %s в %s", source, target));
             } else {
-                stringBuilder.append(String.format("Нет пути"));
+                stringBuilder.append("Нет пути");
             }
             return stringBuilder.toString();
         }
-        stringBuilder.append(String.format("%f: ", totalWeight));
+        //stringBuilder.append(String.format("%f: ", totalWeight));
         ListIterator<Graph.Vertex> iterator = vertices.listIterator();
         stringBuilder.append(iterator.next());
         while (iterator.hasNext()) {
-            stringBuilder.append("-").append(iterator.next());
+            stringBuilder.append("–").append(iterator.next());
         }
         return stringBuilder.toString();
     }

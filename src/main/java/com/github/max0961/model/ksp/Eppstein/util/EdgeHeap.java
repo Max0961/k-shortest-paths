@@ -1,7 +1,7 @@
-package com.github.max0961.ksp.Eppstein.util;
+package com.github.max0961.model.ksp.Eppstein.util;
 
 import com.github.max0961.model.DirectedEdge;
-import com.github.max0961.util.BinaryHeap;
+import com.github.max0961.model.ksp.util.BinaryHeap;
 
 public final class EdgeHeap extends BinaryHeap<DirectedEdge> {
     public EdgeHeap() {

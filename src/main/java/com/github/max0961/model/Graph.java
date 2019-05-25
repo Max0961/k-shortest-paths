@@ -1,21 +1,16 @@
 package com.github.max0961.model;
 
-import com.github.max0961.util.BellmanFordSP;
-import com.github.max0961.util.HeapDijkstraSP;
+import com.github.max0961.model.ksp.util.BellmanFordSP;
+import com.github.max0961.model.ksp.util.HeapDijkstraSP;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.text.NumberFormat;
 import java.util.*;
 
 /**
- * Класс Graph реализует произвольный граф, представленный списком смежности.
- * Помимо прочих, содержит методы сохранения граф в файл, чтения графа из файла
- * и метод создания случайного графа.
+ * Класс реализует произвольный граф с таким ограничением, что кратные ребра запрещены.
  *
  * @see Vertex
  */
@@ -35,7 +30,7 @@ public class Graph {
      *
      * @param fileName имя файла
      */
-    public Graph(String fileName) {
+    public Graph(String fileName) throws Exception {
         readFromFile(fileName);
     }
 
@@ -56,7 +51,7 @@ public class Graph {
         return vertices.containsKey(label);
     }
 
-    public Vertex getVertex(String label) {
+    public Vertex getVertex(String label) throws IllegalArgumentException {
         validateLabel(label);
         return vertices.get(label);
     }
@@ -68,7 +63,7 @@ public class Graph {
      * @return true, если вершина создана, false в противном случае
      */
     public boolean addVertex(String label) {
-        if (vertices.containsKey(label)) {
+        if (vertices.containsKey(label) || label.length() == 0) {
             return false;
         }
         vertices.put(label, new Vertex(label));
@@ -76,7 +71,7 @@ public class Graph {
     }
 
     /**
-     * Добавляет вершину в граф, если вершина с её меткой не имеется в графе
+     * Добавляет вершину в граф, если эта вершина не имеется в графе
      *
      * @param vertex вершина
      * @return true, если вершина добавлена, false в противном случае
@@ -94,13 +89,13 @@ public class Graph {
      *
      * @param label метка вершины
      */
-    public void removeVertex(String label) {
+    public void removeVertex(String label) throws IllegalArgumentException {
         validateLabel(label);
         vertices.remove(label);
     }
 
 
-    public int edgesNumber() {
+    public int edgeNumber() {
         int total = 0;
         for (Vertex v : vertices.values()) {
             total += v.getAdjacencyMap().size();
@@ -109,7 +104,7 @@ public class Graph {
     }
 
     public ArrayList<DirectedEdge> getEdges() {
-        ArrayList<DirectedEdge> edges = new ArrayList<>(edgesNumber());
+        ArrayList<DirectedEdge> edges = new ArrayList<>(edgeNumber());
         for (Vertex vertex : vertices.values()) {
             edges.addAll(vertex.getEdges());
         }
@@ -117,8 +112,6 @@ public class Graph {
     }
 
     public boolean hasEdge(String source, String target) {
-        validateLabel(source);
-        validateLabel(target);
         return hasEdge(this.getVertex(source), this.getVertex(target));
     }
 
@@ -131,8 +124,6 @@ public class Graph {
     }
 
     public boolean addEdge(String source, String target, double weight) {
-        validateLabel(source);
-        validateLabel(target);
         return addEdge(this.getVertex(source), this.getVertex(target), weight);
     }
 
@@ -149,8 +140,6 @@ public class Graph {
     }
 
     public boolean removeEdge(String source, String target) {
-        validateLabel(source);
-        validateLabel(target);
         return removeEdge(this.getVertex(source), this.getVertex(target));
     }
 
@@ -195,71 +184,67 @@ public class Graph {
         for (Vertex vertex : vertices.values()) {
             for (DirectedEdge edge : allEdges.get(vertex)) {
                 edge.inverse();
-                addEdge(edge);
+                this.addEdge(edge);
             }
         }
     }
 
-    public void readFromFile(String fileName) {
-        try {
-            NumberFormat format = NumberFormat.getInstance(Locale.FRANCE);
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
-            String[] description;
-            String currentRow;
-            while ((currentRow = reader.readLine()) != null) {
-                description = currentRow.split("\t+");
-                // читает вершину
-                if (description.length == 1) {
-                    addVertex(description[0]);
-                }
-                // читает исток, сток и вес ребра
-                if (description.length == 3) {
-                    addEdge(description[0], description[1], Double.parseDouble(description[2]));
-                }
-
-                if (description.length == 2) {
-                    addEdge(description[0], description[1], 1);
-                }
+    public void readFromFile(String fileName) throws IOException {
+        vertices.clear();
+        NumberFormat format = NumberFormat.getInstance(Locale.FRANCE);
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        String[] description;
+        String currentRow;
+        while ((currentRow = reader.readLine()) != null) {
+            description = currentRow.split("\t+");
+            // читает вершину
+            if (description.length == 1) {
+                addVertex(description[0]);
             }
-            reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            // читает исток, сток и вес ребра
+            if (description.length == 3) {
+                addEdge(description[0], description[1], Double.parseDouble(description[2]));
+            }
+
+            if (description.length == 2) {
+                addEdge(description[0], description[1], 1);
+            }
         }
+        reader.close();
     }
 
-    public void saveToFile(String fileName) {
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
-            // записывает спискок всех вершин
-            for (Vertex vertex : vertices.values()) {
-                writer.write(vertex + "\n");
-            }
-            // записывает исток, сток и вес ребра через символ табуляции
-            for (Vertex vertex : vertices.values()) {
-                for (Map.Entry<Vertex, Double> entry : vertex.getAdjacencyMap().entrySet()) {
-                    writer.write(vertex + "\t" + entry.getKey() + "\t" + entry.getValue() + "\n");
-                }
-            }
-            writer.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void saveToFile(String fileName) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+        // записывает спискок всех вершин
+        for (Vertex vertex : vertices.values()) {
+            writer.write(vertex + "\n");
         }
+        // записывает исток, сток и вес ребра через символ табуляции
+        for (Vertex vertex : vertices.values()) {
+            for (Map.Entry<Vertex, Double> entry : vertex.getAdjacencyMap().entrySet()) {
+                writer.write(vertex + "\t" + entry.getKey() + "\t" + entry.getValue() + "\n");
+            }
+        }
+        writer.close();
     }
 
-    public void generateRandomGraph(boolean directed, boolean constantDegree, int verticesNumber, float density) {
-        float meanDegree = (verticesNumber - 1) * density;
-        generateRandomGraph(directed, constantDegree, verticesNumber, Math.round(meanDegree));
+    public void generateRandomGraph(boolean directed, boolean constantDegree, int vertexNumber, float density) {
+        float meanDegree = (vertexNumber - 1) * density;
+        generateRandomGraph(directed, constantDegree, vertexNumber, Math.round(meanDegree));
     }
 
     /**
-     * Генерирует граф без петель и параллельных ребер.
-     * Время O(n^2)
+     * Генерирует случайный граф за время O(n + m)
      *
      * @param verticesNumber
      * @param meanDegree
      */
-    public void generateRandomGraph(boolean directed, boolean constantDegree, int verticesNumber, int meanDegree) {
+    public void generateRandomGraph(boolean directed, boolean constantDegree, int verticesNumber, int meanDegree)
+            throws IllegalArgumentException {
+        vertices.clear();
+        if (verticesNumber == 0) return;
         if (meanDegree > verticesNumber - 1) throw new IllegalArgumentException("Exceeded maximum number of edges");
+
         for (int i = 0; i < verticesNumber; ++i) {
             Vertex vertex = new Vertex(Integer.toString(i + 1));
             vertices.put(vertex.getLabel(), vertex);
@@ -271,75 +256,90 @@ public class Graph {
         for (int i = 0; i < adjacencyLengths.length; ++i) {
             adjacencyLengths[i] = i * meanDegree;
         }
-        if (!constantDegree) {
+        if (!constantDegree && meanDegree > 0) {
             for (int i = 1; i < verticesNumber; ++i) {
                 int direction = (int) Math.signum(random.nextDouble() - 0.5);
                 int bound = verticesNumber / meanDegree / 2;
-                int shift = 0;
-                if (bound > 0) shift = random.nextInt(bound + 1);
+                int shift = random.nextInt(bound + 1);
                 adjacencyLengths[i] += shift * direction;
             }
         }
 
-        int[] adjacency = new int[verticesNumber - 1];
+        // количество исхожящих ребер из каждой вершины
+        int[] bounds = new int[verticesNumber];
+        for (int i = 0; i < bounds.length; ++i) {
+            bounds[i] = adjacencyLengths[i + 1] - adjacencyLengths[i];
+        }
 
         String source, target;
         for (int i = 0; i < verticesNumber; ++i) {
             source = Integer.toString(i + 1);
-            setRandomAdjacencyArray(adjacency, i, random);
-            for (int j = 0; j < adjacencyLengths[i + 1] - adjacencyLengths[i]; ++j) {
-                target = Integer.toString(adjacency[j] + 1);
-                vertices.get(source).addEdgeTo(vertices.get(target), random.nextDouble());
-            }
-        }
-
-        if (!directed) {
-            for (Vertex vertex : vertices.values()) {
-                for (Map.Entry<Vertex, Double> entry : vertex.getAdjacencyMap().entrySet()) {
-                    Vertex neighbor = entry.getKey();
-                    double weight = entry.getValue();
-                    neighbor.addEdgeTo(vertex, weight);
+            int bound = bounds[i];
+            ArrayList<Integer> adjacency = getRandomAdjacency(i, bounds, random);
+            for (int j = 0; j < bound; ++j) {
+                if (adjacency.isEmpty()) continue;
+                int t = adjacency.remove(adjacency.size() - 1);
+                target = Integer.toString(t + 1);
+                double w = random.nextDouble();
+                vertices.get(source).addEdgeTo(vertices.get(target), w);
+                if (!directed) {
+                    vertices.get(target).addEdgeTo(vertices.get(source), w);
                 }
+                --bounds[i];
+                --bounds[t];
             }
         }
     }
 
-    private static void setRandomAdjacencyArray(int[] adj, int sourceIndex, Random random) {
-        int shift = 0;
-        for (int i = 0; i < adj.length; ++i) {
-            if (i == sourceIndex) shift = 1;
-            adj[i] = i + shift;
+    private static ArrayList<Integer> getRandomAdjacency(int sourceIndex, int[] bounds, Random random) {
+        ArrayList<Integer> adj = new ArrayList<>(bounds.length - 1);
+        for (int i = 0; i < bounds.length; ++i) {
+            if (bounds[i] > 0 && i != sourceIndex) {
+                adj.add(i);
+            }
         }
-        for (int i = 0; i < adj.length; ++i) {
-            swap(i, random.nextInt(adj.length), adj);
+        for (int i = 0; i < adj.size(); ++i) {
+            swap(i, random.nextInt(adj.size()), adj);
         }
+        return adj;
     }
 
-    private static void swap(int a, int b, int[] array) {
-        int c = array[a];
-        array[a] = array[b];
-        array[b] = c;
+    private static void swap(int a, int b, ArrayList<Integer> array) {
+        int c = array.get(a);
+        array.set(a, array.get(b));
+        array.set(b, c);
     }
 
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        for (Vertex vertex : vertices.values()) {
-            stringBuilder.append(vertex).append(" {");
-            Iterator<Map.Entry<Vertex, Double>> iterator = vertex.getAdjacencyMap().entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<Vertex, Double> entry = iterator.next();
-                stringBuilder.append(entry.getKey()).append(String.format("(%.6f)", entry.getValue()));
-                if (iterator.hasNext()) stringBuilder.append("; ");
+        stringBuilder.append(String.format("|V| = %d and |E| = %d\n", this.verticesNumber(), this.edgeNumber()));
+        Object[] vertexArray = vertices.keySet().toArray();
+        Arrays.sort(vertexArray);
+        for (Object object : vertexArray) {
+            String label = (String) object;
+            stringBuilder.append(label).append(" {");
+            ArrayList<DirectedEdge> edges = vertices.get(label).getEdges();
+            edges.sort(new Comparator<DirectedEdge>() {
+                @Override
+                public int compare(DirectedEdge o1, DirectedEdge o2) {
+                    return o1.getTarget().label.compareTo(o2.getTarget().label);
+                }
+            });
+            for (int i = 0; i < edges.size(); ++i) {
+                stringBuilder.append(edges.get(i).getTarget()).
+                        append("(").append(edges.get(i).getWeight()).append(")");
+                if (i < edges.size() - 1) {
+                    stringBuilder.append(", ");
+                }
             }
             stringBuilder.append("}\n");
         }
-        stringBuilder.append(String.format("|V| = %d и |E| = %d\n", this.verticesNumber(), this.edgesNumber()));
         stringBuilder.append("\n");
         return stringBuilder.toString();
     }
 
-    private void validateLabel(String label) {
+    private void validateLabel(String label) throws IllegalArgumentException {
         if (vertices.size() == 0) {
             throw new IllegalArgumentException(String.format("The graph does not have any vertices so it has no vertex with label %s", label));
         }
@@ -349,9 +349,10 @@ public class Graph {
     }
 
     /**
-     * Вершина содержит метку, ссылки на своих соседей и веса ребер,
-     * расчитанные или нет расстояние от источника
-     * и ссылку на предыдущую верщину в дереве ратчайших путей
+     * Класс содержит метку,
+     * ссылки на своих соседей с весами ребер,
+     * расстояние от источника
+     * и ссылку на предыдущую верщину в дереве ратчайших путей.
      */
     public static class Vertex implements Comparable<Vertex> {
         @Getter
@@ -364,11 +365,21 @@ public class Graph {
         @Getter
         @Setter
         private Vertex predecessor;
+        @Getter
+        private int pathCount = 0;
 
         public Vertex(String label) {
             this.label = label;
             adjacencyMap = new LinkedHashMap<>();
             distance = Double.MAX_VALUE;
+        }
+
+        public void incPathCount() {
+            ++pathCount;
+        }
+
+        public void reset() {
+            pathCount = 0;
         }
 
         public boolean hasPredecessor() {

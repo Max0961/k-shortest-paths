@@ -1,13 +1,12 @@
-package com.github.max0961.util;
+package com.github.max0961.model.ksp.util;
 
 import com.github.max0961.model.Graph;
 
 import java.util.*;
 
 /**
- * Время работы O(n^2 + m).
+ * Временная сложность O(n^2 + m).
  * Основной цикл выполняется n раз, и каждый раз ищется вершина с минимальным значением distance
- * {@link Graph.Vertex#distance}.
  * Проверяется каждая смежная вершина с текущей вершиной, количество проверок равно m.
  */
 

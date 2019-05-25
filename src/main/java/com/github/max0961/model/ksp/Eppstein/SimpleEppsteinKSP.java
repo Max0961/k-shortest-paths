@@ -1,26 +1,32 @@
-package com.github.max0961.ksp.Eppstein;
+package com.github.max0961.model.ksp.Eppstein;
 
-import com.github.max0961.ksp.Eppstein.util.ImplicitPath;
-import com.github.max0961.ksp.KSP;
+import com.github.max0961.model.ksp.Eppstein.util.ImplicitPath;
+import com.github.max0961.model.ksp.KSP;
 import com.github.max0961.model.DirectedEdge;
 import com.github.max0961.model.Graph;
-import com.github.max0961.util.BinaryHeap;
+import com.github.max0961.model.ksp.util.BinaryHeap;
 
 import java.util.HashMap;
-import java.util.Stack;
+import java.util.LinkedList;
 
 /**
  * Упрощенная версия алгоритма Эппштейна.
- * Здесь мы не реорганизуем кучу путей.
- * Вычисляет K кратчайших путей (допуская циклы) в графе между двумя вершинами.
+ * Здесь не реорганизуется куча путей.
+ * Вычисляет K-кратчайших путей (допуская циклы) в ориентированном графе между двумя вершинами.
  */
 public final class SimpleEppsteinKSP extends KSP {
+    public SimpleEppsteinKSP() {
+        super();
+    }
+
     public SimpleEppsteinKSP(Graph graph, String source, String target, int k) {
         super(graph, source, target, k);
     }
 
     @Override
     public void findKsp(int K, Graph graph, Graph.Vertex source, Graph.Vertex target) {
+        ksp.clear();
+        graph.clearSpTree();
         graph.reverse();
         if (!graph.formSpTree(target)) throw new IllegalArgumentException("The graph has reachable negative cycle");
         graph.reverse();
@@ -33,22 +39,26 @@ public final class SimpleEppsteinKSP extends KSP {
                     - позиция родительского неявного пути
                     - ребро ответвления (lastSidetrack)
              */
-            ImplicitPath path = candidates.remove();
-            ksp.add(path.toExplicitPath(ksp));
+            ImplicitPath imp = candidates.remove();
+            ksp.add(imp.toExplicitPath(ksp));
+            if (ksp.getLast().getTarget() != target) {
+                ksp.removeLast();
+                break;
+            }
             // Добавить потомки этого неявного пути в очередь с приоритетом.
             // Временная сложность O(m).
-            addChildrenToHeap(candidates, path, sidetracks, k);
+            addChildrenToHeap(candidates, imp, sidetracks, k);
         }
     }
 
     private void addChildrenToHeap(BinaryHeap c, ImplicitPath p, HashMap<String, DirectedEdge> sidetracks, int k) {
-        Stack<DirectedEdge> edges = new Stack<>();
+        LinkedList<DirectedEdge> edges = new LinkedList<>();
 
         for (DirectedEdge outgoingEdge : p.getLastSidetrack().getTarget().getEdges()) {
             edges.push(outgoingEdge);
         }
 
-        while (!edges.empty()) {
+        while (!edges.isEmpty()) {
             DirectedEdge poppedEdge = edges.pop();
             String label = poppedEdge.toString();
 

@@ -1,4 +1,4 @@
-package com.github.max0961.ksp.Eppstein.util;
+package com.github.max0961.model.ksp.Eppstein.util;
 
 import com.github.max0961.model.DirectedEdge;
 import com.github.max0961.model.Graph;
@@ -33,14 +33,14 @@ public class ImplicitPath implements Comparable<ImplicitPath> {
 
     public Path toExplicitPath(LinkedList<Path> ksp) {
         LinkedList<Graph.Vertex> vertices = new LinkedList<>();
-        Graph.Vertex v;
+        Graph.Vertex v = null;
         if (ksp.size() > 0) {
             Path prefPath = ksp.get(prefPathPosition);
             ListIterator<Graph.Vertex> iterator = prefPath.getVertices().listIterator();
-            do {
+            while (iterator.hasNext() && v != lastSidetrack.getSource()) {
                 v = iterator.next();
                 vertices.add(v);
-            } while (iterator.hasNext() && v != lastSidetrack.getSource());
+            }
         }
         v = lastSidetrack.getTarget();
         vertices.add(v);

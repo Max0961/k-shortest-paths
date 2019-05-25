@@ -1,11 +1,11 @@
-package com.github.max0961.util;
+package com.github.max0961.model.ksp.util;
 
 import com.github.max0961.model.Graph;
 
 import java.util.Map;
 
 /**
- * Время работы O((n + m)log(n)).
+ * Временная сложность O((n + m)log(n)).
  * Используется бинарная куча.
  * Вершины добавляются в очередь по мере необходимости.
  *
@@ -40,6 +40,7 @@ public final class HeapDijkstraSP {
             v.setDistance(u.getDistance() + weight);
             v.setPredecessor(u);
             priorityQueue.add(v);
+
         }
     }
 }
