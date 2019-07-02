@@ -42,10 +42,10 @@ public final class GraphDrawing extends JComponent implements ActionListener {
     private final double canH = 500;
     private double paddingFactor = 0.2;
 
-    private Color pointColor1 = new Color(92, 102, 127);
-    private Color pointColor2 = new Color(232, 0, 47);
-    private Color edgeColor1 = new Color(92, 102, 127);
-    private Color edgeColor2 = new Color(232, 0, 47);
+    private Color pointColor1 = new Color(23, 44, 82);
+    private Color pointColor2 = new Color(240, 0, 40);
+    private Color edgeColor1 = new Color(23, 44, 82);
+    private Color edgeColor2 =new Color(240, 0, 40);
     private Color weightColor1 = new Color(181, 42, 31);
     private Color weightColor2 = new Color(14, 0, 167);
 
@@ -109,6 +109,7 @@ public final class GraphDrawing extends JComponent implements ActionListener {
         g2d.setColor(Color.black);
         if (ksp == null || pathIndex == -1 || !isInitialized) return;
         drawPath(g2d);
+        g2d.dispose();
     }
 
     private void drawPath(Graphics2D g2d) {
@@ -128,8 +129,8 @@ public final class GraphDrawing extends JComponent implements ActionListener {
     }
 
     private void drawPoint(Graphics2D g2d, Point point, Color color) {
-        int x = toXScreenCoordinates(point.getLocation().x);
-        int y = toYScreenCoordinates(point.getLocation().y);
+        int x = toXScreenCoordinate(point.getLocation().x);
+        int y = toYScreenCoordinate(point.getLocation().y);
 
         g2d.setColor(color);
         String label = point.self.getLabel();
@@ -155,13 +156,12 @@ public final class GraphDrawing extends JComponent implements ActionListener {
     private void drawEdge(Graphics2D g2d, DirectedEdge edge, Color color, boolean weightValues) {
         Point point = points.get(edge.getSource());
         Point neighbor = points.get(edge.getTarget());
-        int x1 = toXScreenCoordinates(point.getLocation().x);
-        int y1 = toYScreenCoordinates(point.getLocation().y);
-        int x2 = toXScreenCoordinates(neighbor.getLocation().x);
-        int y2 = toYScreenCoordinates(neighbor.getLocation().y);
+        int x1 = toXScreenCoordinate(point.getLocation().x);
+        int y1 = toYScreenCoordinate(point.getLocation().y);
+        int x2 = toXScreenCoordinate(neighbor.getLocation().x);
+        int y2 = toYScreenCoordinate(neighbor.getLocation().y);
         g2d.setPaint(color);
         g2d.drawLine(x1, y1, x2, y2);
-        if (!weightValues) return;
 
         String weight = String.format("%.2f", edge.getWeight());
         int fh = g2d.getFontMetrics().getHeight();
@@ -302,11 +302,11 @@ public final class GraphDrawing extends JComponent implements ActionListener {
         return new double[]{minX, maxX, minY, maxY};
     }
 
-    private int toXScreenCoordinates(double x) {
+    private int toXScreenCoordinate(double x) {
         return (int) Math.round(shiftX(zoom(x)));
     }
 
-    private int toYScreenCoordinates(double y) {
+    private int toYScreenCoordinate(double y) {
         return (int) Math.round(shiftY(zoom(y)));
     }
 

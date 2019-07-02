@@ -7,10 +7,10 @@ import org.junit.Test;
 /**
  * Unit test for simple Application.
  */
-public class YenTest
+public class YenBenchmark
 {
     /**
-     * Rigorous Test :-)
+     * Rigorous Benchmark :-)
      */
     @Test
     public void shouldAnswerWithTrue()

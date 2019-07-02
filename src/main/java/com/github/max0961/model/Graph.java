@@ -1,9 +1,10 @@
 package com.github.max0961.model;
 
-import com.github.max0961.model.ksp.util.BellmanFordSP;
-import com.github.max0961.model.ksp.util.HeapDijkstraSP;
+import com.github.max0961.model.util.BellmanFordSP;
+import com.github.max0961.model.util.HeapDijkstraSP;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.var;
 
 import java.io.*;
 import java.text.NumberFormat;
@@ -161,7 +162,8 @@ public class Graph {
         if (negativeEdgeCount == 0) {
             HeapDijkstraSP.compute(root);
             return true;
-        } else return BellmanFordSP.compute(this, root);
+        }
+        return BellmanFordSP.compute(this, root);
     }
 
     public void clearSpTree() {
@@ -234,17 +236,18 @@ public class Graph {
     }
 
     /**
-     * Генерирует случайный граф за время O(n + m)
+     * Генерирует случайный граф за время O(n^2)
      *
      * @param verticesNumber
      * @param meanDegree
      */
-    public void generateRandomGraph(boolean directed, boolean constantDegree, int verticesNumber, int meanDegree)
+    public void generateRandomGraph(boolean isDirected, boolean hasConstantDegree, int verticesNumber, int meanDegree)
             throws IllegalArgumentException {
         vertices.clear();
         if (verticesNumber == 0) return;
         if (meanDegree > verticesNumber - 1) throw new IllegalArgumentException("Exceeded maximum number of edges");
 
+        // Создание вершин в графе
         for (int i = 0; i < verticesNumber; ++i) {
             Vertex vertex = new Vertex(Integer.toString(i + 1));
             vertices.put(vertex.getLabel(), vertex);
@@ -252,60 +255,58 @@ public class Graph {
 
         Random random = new Random();
 
-        int[] adjacencyLengths = new int[verticesNumber + 1];
-        for (int i = 0; i < adjacencyLengths.length; ++i) {
-            adjacencyLengths[i] = i * meanDegree;
+        int[] bounds = new int[verticesNumber + 1];
+        for (int i = 0; i < bounds.length; ++i) {
+            bounds[i] = i * meanDegree;
         }
-        if (!constantDegree && meanDegree > 0) {
+        if (!hasConstantDegree && meanDegree > 0) {
             for (int i = 1; i < verticesNumber; ++i) {
                 int direction = (int) Math.signum(random.nextDouble() - 0.5);
-                int bound = verticesNumber / meanDegree / 2;
+                int bound = Math.min(verticesNumber - 1 - meanDegree, meanDegree);
                 int shift = random.nextInt(bound + 1);
-                adjacencyLengths[i] += shift * direction;
+                bounds[i] += shift * direction;
             }
         }
 
-        // количество исхожящих ребер из каждой вершины
-        int[] bounds = new int[verticesNumber];
-        for (int i = 0; i < bounds.length; ++i) {
-            bounds[i] = adjacencyLengths[i + 1] - adjacencyLengths[i];
+        // Количество входящих и исходящих ребер для каждой вершины
+        int i = 0;
+        for (Vertex vertex : vertices.values()) {
+            vertex.setCounter(bounds[i + 1] - bounds[i]);
+            ++i;
         }
 
-        String source, target;
-        for (int i = 0; i < verticesNumber; ++i) {
-            source = Integer.toString(i + 1);
-            int bound = bounds[i];
-            ArrayList<Integer> adjacency = getRandomAdjacency(i, bounds, random);
-            for (int j = 0; j < bound; ++j) {
-                if (adjacency.isEmpty()) continue;
-                int t = adjacency.remove(adjacency.size() - 1);
-                target = Integer.toString(t + 1);
-                double w = random.nextDouble();
-                vertices.get(source).addEdgeTo(vertices.get(target), w);
-                if (!directed) {
-                    vertices.get(target).addEdgeTo(vertices.get(source), w);
+        ArrayList<Vertex> adjacencyList = new ArrayList<>(verticesNumber);
+        for (Vertex source : vertices.values()) {
+            adjacencyList.clear();
+            for (Vertex vertex : vertices.values()) {
+                if (source != vertex && vertex.getCounter() > 0) {
+                    adjacencyList.add(vertex);
                 }
-                --bounds[i];
-                --bounds[t];
+            }
+            int bound = source.getCounter();
+            mix(adjacencyList, random);
+            for (i = 0; i < bound; ++i) {
+                if (adjacencyList.isEmpty()) continue;
+                Vertex target = adjacencyList.remove(adjacencyList.size() - 1);
+                double w = random.nextDouble();
+                source.addEdgeTo(target, w);
+                if (!isDirected) {
+                    target.addEdgeTo(source, w);
+                }
+                source.decCounter();
+                target.decCounter();
             }
         }
     }
 
-    private static ArrayList<Integer> getRandomAdjacency(int sourceIndex, int[] bounds, Random random) {
-        ArrayList<Integer> adj = new ArrayList<>(bounds.length - 1);
-        for (int i = 0; i < bounds.length; ++i) {
-            if (bounds[i] > 0 && i != sourceIndex) {
-                adj.add(i);
-            }
+    private void mix(ArrayList<Vertex> list, Random random) {
+        for (int i = 0; i < list.size(); ++i) {
+            swap(i, random.nextInt(list.size()), list);
         }
-        for (int i = 0; i < adj.size(); ++i) {
-            swap(i, random.nextInt(adj.size()), adj);
-        }
-        return adj;
     }
 
-    private static void swap(int a, int b, ArrayList<Integer> array) {
-        int c = array.get(a);
+    private static void swap(int a, int b, ArrayList<Vertex> array) {
+        var c = array.get(a);
         array.set(a, array.get(b));
         array.set(b, c);
     }
@@ -313,19 +314,18 @@ public class Graph {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(String.format("|V| = %d and |E| = %d\n", this.verticesNumber(), this.edgeNumber()));
+        stringBuilder.append(String.format("|V| = %d, |E| = %d\n", this.verticesNumber(), this.edgeNumber()));
+        if (this.edgeNumber() > 1e6) {
+            stringBuilder.append("Too much edges");
+            return stringBuilder.toString();
+        }
         Object[] vertexArray = vertices.keySet().toArray();
         Arrays.sort(vertexArray);
         for (Object object : vertexArray) {
             String label = (String) object;
             stringBuilder.append(label).append(" {");
             ArrayList<DirectedEdge> edges = vertices.get(label).getEdges();
-            edges.sort(new Comparator<DirectedEdge>() {
-                @Override
-                public int compare(DirectedEdge o1, DirectedEdge o2) {
-                    return o1.getTarget().label.compareTo(o2.getTarget().label);
-                }
-            });
+            edges.sort((e1, e2) -> e1.getTarget().label.compareTo(e2.getTarget().label));
             for (int i = 0; i < edges.size(); ++i) {
                 stringBuilder.append(edges.get(i).getTarget()).
                         append("(").append(edges.get(i).getWeight()).append(")");
@@ -349,10 +349,7 @@ public class Graph {
     }
 
     /**
-     * Класс содержит метку,
-     * ссылки на своих соседей с весами ребер,
-     * расстояние от источника
-     * и ссылку на предыдущую верщину в дереве ратчайших путей.
+     * Класс содержит метку, ссылки на своих соседей, и поля для алгоритмов
      */
     public static class Vertex implements Comparable<Vertex> {
         @Getter
@@ -361,12 +358,13 @@ public class Graph {
         private final HashMap<Vertex, Double> adjacencyMap;
         @Getter
         @Setter
-        private Double distance;
+        private double distance;
         @Getter
         @Setter
         private Vertex predecessor;
         @Getter
-        private int pathCount = 0;
+        @Setter
+        private int counter = 0;
 
         public Vertex(String label) {
             this.label = label;
@@ -374,12 +372,16 @@ public class Graph {
             distance = Double.MAX_VALUE;
         }
 
-        public void incPathCount() {
-            ++pathCount;
+        public void incCounter() {
+            ++counter;
+        }
+
+        public void decCounter() {
+            --counter;
         }
 
         public void reset() {
-            pathCount = 0;
+            counter = 0;
         }
 
         public boolean hasPredecessor() {
@@ -427,7 +429,7 @@ public class Graph {
 
         @Override
         public int compareTo(Vertex vertex) {
-            return distance.compareTo(vertex.distance);
+            return Double.compare(this.distance, vertex.distance);
         }
     }
 }

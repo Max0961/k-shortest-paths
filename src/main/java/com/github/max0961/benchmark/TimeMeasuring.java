@@ -1,4 +1,4 @@
-package com.github.max0961.model.ksp.util;
+package com.github.max0961.benchmark;
 
 public final class TimeMeasuring {
     private TimeMeasuring() {

@@ -3,13 +3,14 @@ package com.github.max0961.model.ksp;
 import com.github.max0961.model.DirectedEdge;
 import com.github.max0961.model.Graph;
 import com.github.max0961.model.Path;
-import com.github.max0961.model.ksp.util.BinaryHeap;
+import com.github.max0961.model.util.BinaryHeap;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
  * Алгоритм Йена.
- * Вычисляет K-кратчайших путей в графе с положительными весами ребер между двумя вершинами.
+ * Вычисляет K-кратчайшие пути в графе с положительными весами ребер между двумя вершинами.
  * Время работы O(kn((n + m)log(n)).
  */
 public final class YenKSP extends KSP {
@@ -22,14 +23,14 @@ public final class YenKSP extends KSP {
     }
 
     @Override
-    public void findKsp(int K, Graph graph, Graph.Vertex source, Graph.Vertex target) throws IllegalArgumentException {
+    public void findKsp(int K, Graph graph, Graph.Vertex source, Graph.Vertex target) {
         ksp.clear();
-        if (graph.getNegativeEdgeNumber() > 0) throw new IllegalArgumentException("The graph has negative edges");
+        if (graph.getNegativeEdgeNumber() > 0) throw new IllegalArgumentException("The graph has negative edge");
         BinaryHeap<Path> candidates = new BinaryHeap<>();
         // Рассчитаем первый кратчайший путь
         ksp.add(new Path(graph, source, target));
         LinkedList<DirectedEdge> removedEdges = new LinkedList<>();
-        LinkedList<Graph.Vertex> removedVertices = new LinkedList<>();
+        ArrayList<Graph.Vertex> removedVertices = new ArrayList<>();
         // K - 1 кратчайших путей
         for (int k = 1; k < K; ++k) {
             Path prev = ksp.get(k - 1);
@@ -63,8 +64,8 @@ public final class YenKSP extends KSP {
                 if (spurPath.length() == 0) {
                     continue;
                 }
-                Path total = root.add(spurPath);
-                candidates.add(total);
+                root.add(spurPath);
+                candidates.add(root);
             }
             if (candidates.isEmpty()) {
                 return;
@@ -73,14 +74,14 @@ public final class YenKSP extends KSP {
             Path path;
             do {
                 path = candidates.remove();
-            } while (prev.equals(path));
+            } while (!candidates.isEmpty() && prev.equals(path));
             ksp.add(path);
         }
     }
 
-    private void restoreGraph(Graph graph, LinkedList<DirectedEdge> edges, LinkedList<Graph.Vertex> vertices) {
+    private void restoreGraph(Graph graph, LinkedList<DirectedEdge> edges, ArrayList<Graph.Vertex> vertices) {
         while (!vertices.isEmpty()) {
-            graph.addVertex(vertices.pop());
+            graph.addVertex(vertices.remove(vertices.size() - 1));
         }
         while (!edges.isEmpty()) {
             graph.addEdge(edges.pop());

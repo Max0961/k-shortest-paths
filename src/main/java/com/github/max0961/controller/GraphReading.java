@@ -1,15 +1,15 @@
 package com.github.max0961.controller;
 
 import com.github.max0961.model.Graph;
-import com.github.max0961.model.ksp.util.TimeMeasuring;
+import com.github.max0961.benchmark.CpuTimeMeasuring;
 import com.github.max0961.view.GUI;
 
 import java.io.IOException;
 
-public class ReadingGraph implements Runnable {
+public class GraphReading implements Runnable {
     private GUI gui;
 
-    public ReadingGraph(GUI gui) {
+    public GraphReading(GUI gui) {
         this.gui = gui;
     }
 
@@ -17,11 +17,10 @@ public class ReadingGraph implements Runnable {
         try {
             gui.resetComponents();
             gui.getGraphTextArea().setText("Reading the graph...");
-            TimeMeasuring.start();
+            CpuTimeMeasuring.start();
             gui.getGraph().readFromFile(gui.getLoadTextField().getText());
-            TimeMeasuring.stop();
-            String time = String.format("%.6fs\n", TimeMeasuring.getElapsedTime());
-            gui.getGraphTextArea().setText(time + gui.getGraph().toString());
+            CpuTimeMeasuring.stop();
+            gui.getGraphTextArea().setText(gui.getGraph().toString());
             for (Graph.Vertex v : gui.getGraph().getVertices()) {
                 gui.updateComboBoxes(v.getLabel(), true);
             }

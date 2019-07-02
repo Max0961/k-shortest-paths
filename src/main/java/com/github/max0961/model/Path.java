@@ -1,9 +1,10 @@
 package com.github.max0961.model;
 
-import com.github.max0961.model.ksp.util.HeapDijkstraSP;
+import com.github.max0961.model.util.HeapDijkstraSP;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
@@ -20,16 +21,9 @@ public class Path implements Comparable<Path> {
     @Getter
     private Graph.Vertex target;
     @Getter
-    private Double totalWeight;
+    private double totalWeight;
     @Getter
     private boolean isReachableTarget;
-
-    /**
-     * Пустой путь
-     */
-    public Path() {
-
-    }
 
     /**
      * Путь, созданный из списка вершин
@@ -47,18 +41,15 @@ public class Path implements Comparable<Path> {
         }
     }
 
-    private void computeTotalWeight() {
-        totalWeight = 0.0;
-        for (int i = 0; i < vertices.size() - 1; ++i) {
-            Double edgeWeight = vertices.get(i).getAdjacencyMap().get(vertices.get(i + 1));
-            if (edgeWeight == null) {
-                totalWeight = null;
-                isReachableTarget = false;
-                break;
-            }
-            totalWeight += edgeWeight;
-        }
-        isReachableTarget = true;
+    /**
+     * Путь, расчитанный от источника до цели
+     *
+     * @param graph  граф, где расчитывается путь
+     * @param source метка источника
+     * @param target метка цели
+     */
+    public Path(Graph graph, String source, String target) {
+        this(graph, graph.getVertex(source), graph.getVertex(target));
     }
 
     /**
@@ -68,10 +59,6 @@ public class Path implements Comparable<Path> {
      * @param source источник
      * @param target цель
      */
-    public Path(Graph graph, String source, String target) {
-        this(graph, graph.getVertex(source), graph.getVertex(target));
-    }
-
     public Path(Graph graph, Graph.Vertex source, Graph.Vertex target) {
         graph.clearSpTree();
         HeapDijkstraSP.compute(source);
@@ -80,6 +67,32 @@ public class Path implements Comparable<Path> {
         totalWeight = target.getDistance();
         vertices = new LinkedList<>();
         retrieve(target, vertices);
+    }
+
+    /**
+     * Скопированный путь
+     *
+     * @param path копируемый путь
+     */
+    public Path(Path path) {
+        this.vertices = new LinkedList<>(path.vertices);
+        this.source = path.source;
+        this.target = path.target;
+        this.totalWeight = path.totalWeight;
+        this.isReachableTarget = path.isReachableTarget;
+    }
+
+    private void computeTotalWeight() {
+        totalWeight = 0.0;
+        for (int i = 0; i < vertices.size() - 1; ++i) {
+            if (!vertices.get(i).getAdjacencyMap().containsKey(vertices.get(i + 1))){
+                totalWeight = Double.MAX_VALUE;
+                isReachableTarget = false;
+                break;
+            }
+            totalWeight += vertices.get(i).getAdjacencyMap().get(vertices.get(i + 1));
+        }
+        isReachableTarget = true;
     }
 
     public ArrayList<DirectedEdge> getEdges() {
@@ -95,7 +108,7 @@ public class Path implements Comparable<Path> {
      *
      * @param path добавляемый путь
      */
-    public Path add(Path path) {
+    public void add(Path path) {
         if (this.vertices.getLast() == path.vertices.getFirst()) {
             vertices.removeLast();
             vertices.addAll(path.getVertices());
@@ -105,21 +118,20 @@ public class Path implements Comparable<Path> {
             vertices.addAll(path.getVertices());
             computeTotalWeight();
         }
-        return this;
     }
 
     /**
-     * Добавляет в конец к этому пути одну вершину, обновляя значение веса.
+     * Добавляет в конец к этому пути ребро, обновляя значение веса,
+     * только в том случае, если это ребро начинается с вершины, на которую заканчивается путь
      *
-     * @param edge добавляемая вершина
+     * @param edge добавляемое ребро
      */
-    public Path add(DirectedEdge edge) {
-        if (this.vertices.getLast() == edge.getSource()) {
+    public void add(DirectedEdge edge) {
+        if (vertices.getLast() == edge.getSource()) {
             vertices.add(edge.getTarget());
             totalWeight += edge.getWeight();
             target = edge.getTarget();
         }
-        return this;
     }
 
     public Graph.Vertex vertexAt(int i) throws IllegalArgumentException {
@@ -163,6 +175,12 @@ public class Path implements Comparable<Path> {
         } else {
             isReachableTarget = false;
         }
+    }
+
+    public boolean hasCycle() {
+        HashSet<Graph.Vertex> set = new HashSet<>();
+        set.addAll(this.getVertices());
+        return this.length() != set.size();
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.github.max0961.model.ksp.util;
+package com.github.max0961.model.util;
 
 import java.util.*;
 
@@ -115,8 +115,9 @@ public class BinaryHeap<T extends Comparable<T>> {
         return Arrays.copyOf(items, items.length * 2);
     }
 
+    private T tmp;
     private void swap(int index1, int index2) {
-        T tmp = items[index1];
+        tmp = items[index1];
         items[index1] = items[index2];
         items[index2] = tmp;
     }

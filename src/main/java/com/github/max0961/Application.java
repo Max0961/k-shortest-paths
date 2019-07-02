@@ -1,7 +1,5 @@
 package com.github.max0961;
 
-import com.github.max0961.model.ksp.KSP;
-import com.github.max0961.model.ksp.YenKSP;
 import com.github.max0961.view.GUI;
 
 import javax.swing.*;

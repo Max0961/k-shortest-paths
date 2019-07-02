@@ -1,8 +1,8 @@
 package com.github.max0961.view;
 
 import com.github.max0961.controller.AlgorithmRunning;
-import com.github.max0961.controller.GeneratingGraph;
-import com.github.max0961.controller.ReadingGraph;
+import com.github.max0961.controller.GraphGenerating;
+import com.github.max0961.controller.GraphReading;
 import com.github.max0961.model.Graph;
 import com.github.max0961.model.ksp.Eppstein.SimpleEppsteinKSP;
 import com.github.max0961.model.ksp.GeneralizedDijkstra;
@@ -12,8 +12,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -102,9 +100,9 @@ public class GUI extends JFrame {
         spinner1.setValue(6);
         spinner2.setValue(5);
 
-        algorithmComboBox.addItem(YenKSP.class.getName());
-        algorithmComboBox.addItem(SimpleEppsteinKSP.class.getName());
-        algorithmComboBox.addItem(GeneralizedDijkstra.class.getName());
+        algorithmComboBox.addItem(YenKSP.class.getSimpleName());
+        algorithmComboBox.addItem(SimpleEppsteinKSP.class.getSimpleName());
+        algorithmComboBox.addItem(GeneralizedDijkstra.class.getSimpleName());
         kSpinner.setValue(10);
 
         canvas = new GraphDrawing(graph);
@@ -124,7 +122,7 @@ public class GUI extends JFrame {
             }
         });
         loadOKButton.addActionListener(e -> {
-            Runnable runnable = new ReadingGraph(GUI.this);
+            Runnable runnable = new GraphReading(GUI.this);
             Thread thread = new Thread(runnable);
             thread.start();
             saveTextField.setText(loadTextField.getText());
@@ -154,7 +152,9 @@ public class GUI extends JFrame {
                 double edgeWeight = Double.parseDouble(edgeWeightTextField.getText());
                 String sourceVertexLabel = (String) sourceComboBox1.getSelectedItem();
                 String targetVertexLabel = (String) targetComboBox1.getSelectedItem();
-                graph.addEdge(sourceVertexLabel, targetVertexLabel, edgeWeight);
+                if (!graph.addEdge(sourceVertexLabel, targetVertexLabel, edgeWeight)) {
+                    edgeWeightTextField.setText("Already exists");
+                }
                 if (!directedEdgeCheckBox.isSelected()) {
                     graph.addEdge(targetVertexLabel, sourceVertexLabel, edgeWeight);
                 }
@@ -177,7 +177,7 @@ public class GUI extends JFrame {
         });
 
         generateButton.addActionListener(e -> {
-            Runnable runnable = new GeneratingGraph(GUI.this);
+            Runnable runnable = new GraphGenerating(GUI.this);
             Thread thread = new Thread(runnable);
             thread.start();
         });

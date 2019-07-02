@@ -7,7 +7,7 @@ import lombok.Getter;
 import java.util.LinkedList;
 
 /**
- * Вычисляет K-кратчайших путей в графе между двумя вершинами.
+ * Вычисляет K-кратчайшие пути в графе между двумя вершинами.
  */
 public abstract class KSP {
     @Getter
@@ -31,39 +31,42 @@ public abstract class KSP {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
+        int minSpaceCount = 1;
 
-        stringBuilder.append("k\t");
+        stringBuilder.append("k");
+        fillSpaces(stringBuilder, getIntLen(ksp.size() + 1));
         stringBuilder.append("path");
-        fillTabs(stringBuilder, getTabNumber("path"));
+        int psml = findPathStringMaxLength();
+        fillSpaces(stringBuilder, Math.max(psml - 4 + 1, minSpaceCount));
         stringBuilder.append("weight").append("\n");
 
         for (int i = 0; i < ksp.size(); ++i) {
-            stringBuilder.append(i + 1).append("\t").append(ksp.get(i));
-            fillTabs(stringBuilder, getTabNumber(ksp.get(i).toString()));
+            stringBuilder.append(i + 1);
+            fillSpaces(stringBuilder, getIntLen(ksp.size() + 1) - getIntLen(i + 1) + minSpaceCount);
+            stringBuilder.append(ksp.get(i));
+            fillSpaces(stringBuilder, Math.max(psml, 4) - ksp.get(i).toString().length() + minSpaceCount);
             stringBuilder.append(ksp.get(i).getTotalWeight()).append("\n");
         }
         return stringBuilder.toString();
     }
 
-    private int getTabNumber(String str) {
+    private int getIntLen(int value) {
+        return Integer.toString(value).length();
+    }
+
+    private int findPathStringMaxLength() {
         int maxLength = 0;
         for (Path path : ksp) {
             if (path.toString().length() > maxLength) {
                 maxLength = path.toString().length();
             }
         }
-        return (maxLength / 8 - str.length() / 8) + 1;
+        return maxLength;
     }
 
-    private void fillTabs(StringBuilder stringBuilder, int n) {
+    private void fillSpaces(StringBuilder stringBuilder, int n) {
         for (int i = 0; i < n; ++i) {
-            stringBuilder.append("\t");
-        }
-    }
-
-    private void fillLine(StringBuilder stringBuilder, int n) {
-        for (int i = 0; i < n; ++i) {
-            stringBuilder.append("-");
+            stringBuilder.append(" ");
         }
     }
 }

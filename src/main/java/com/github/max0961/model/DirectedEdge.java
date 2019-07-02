@@ -9,12 +9,12 @@ public class DirectedEdge implements Comparable<DirectedEdge>, Cloneable {
     @Getter
     private Graph.Vertex target;
     @Getter
-    private Double weight;
+    private double weight;
     @Getter
     @Setter
-    private Double delta;
+    private double delta;
     @Getter
-    private Double incrementalWeight;
+    private double incrementalWeight;
 
     /**
      * Конструктор ребра, в котором вес определяется уже имеющейся смежностью данных вершин в графе
@@ -25,11 +25,11 @@ public class DirectedEdge implements Comparable<DirectedEdge>, Cloneable {
     public DirectedEdge(Graph.Vertex source, Graph.Vertex target) {
         this.source = source;
         this.target = target;
-        weight = source.getAdjacencyMap().get(target);
-        if (weight == null) {
+        if (!source.getAdjacencyMap().containsKey(target)) {
             String exception = String.format("Vertex %s are not adjacent to vertex %s in the graph", source, target);
             throw new IllegalArgumentException(exception);
         }
+        weight = source.getAdjacencyMap().get(target);
     }
 
     /**
